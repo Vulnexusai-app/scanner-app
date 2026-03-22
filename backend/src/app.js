@@ -27,7 +27,7 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://plausible.io"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https:"],
+      imgSrc: ["'self'", "data:", "https:", "data:image/png;base64"],
       connectSrc: ["'self'", "https://*.supabase.co", "https://api.groq.com", "https://generativelanguage.googleapis.com"],
     }
   },

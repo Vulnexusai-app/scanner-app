@@ -18,6 +18,8 @@
     "express-rate-limit": "^7.5.1",
     "helmet": "^8.1.0",
     "pdfkit": "^0.18.0",
+    "qrcode": "^1.5.3",
+    "otplib": "^12.0.1",
     "resend": "^6.9.4"
   },
   "engines": {
