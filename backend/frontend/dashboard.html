@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — VulnexusAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --void:#030712;--base:#060d1f;--surface:#0a1128;--elevated:#0f1733;--card:#0d1530;
+      --border:rgba(255,255,255,0.07);--border-2:rgba(255,255,255,0.12);
+      --green:#00e676;--green-d:rgba(0,230,118,.12);--green-glow:0 0 40px rgba(0,230,118,.25);
+      --red:#ff4466;--red-d:rgba(255,68,102,.1);
+      --yellow:#ffd600;--yellow-d:rgba(255,214,0,.1);
+      --blue:#4488ff;--blue-d:rgba(68,136,255,.1);
+      --sidebar:220px;
+      --text:#f0f4ff;--text-2:#8899bb;--text-3:#3d4f6a;
+      --font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+      --r8:8px;--r12:12px;--r16:16px;--r24:24px;
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:var(--font);background:var(--void);color:var(--text);min-height:100vh;display:flex;-webkit-font-smoothing:antialiased}
+
+    /* SIDEBAR */
+    .sidebar{width:var(--sidebar);min-height:100vh;background:var(--base);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:50}
+    .sidebar-logo{padding:20px 16px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;text-decoration:none}
+    .logo-ic{width:32px;height:32px;background:var(--green-d);border:1px solid rgba(0,230,118,.25);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+    .logo-tx{font-size:.9rem;font-weight:800;letter-spacing:-.02em}
+    .logo-tx span{color:var(--green)}
+    .sidebar-nav{flex:1;padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r8);color:var(--text-2);text-decoration:none;font-size:.83rem;font-weight:500;transition:all .2s;cursor:pointer;border:none;background:none;width:100%;text-align:left}
+    .nav-item:hover{background:rgba(255,255,255,.05);color:var(--text)}
+    .nav-item.active{background:var(--green-d);color:var(--green);font-weight:600}
+    .nav-item span{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+    .sidebar-bottom{padding:12px 8px;border-top:1px solid var(--border)}
+    .user-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r12);padding:12px}
+    .user-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .user-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--green),#00b894);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#020a05;flex-shrink:0}
+    .user-info{min-width:0;flex:1}
+    .user-name{font-size:.78rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .user-plan{font-size:.65rem;color:var(--text-2);font-family:var(--mono)}
+    .plan-badge{display:inline-block;padding:2px 8px;border-radius:50px;font-size:.58rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+    .badge-free{background:var(--blue-d);color:var(--blue);border:1px solid rgba(68,136,255,.2)}
+    .badge-pro{background:var(--green-d);color:var(--green);border:1px solid rgba(0,230,118,.2)}
+    .usage-bar{margin-bottom:10px}
+    .usage-label{display:flex;justify-content:space-between;margin-bottom:5px}
+    .usage-lbl{font-family:var(--mono);font-size:.62rem;color:var(--text-3)}
+    .usage-track{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+    .usage-fill{height:100%;background:var(--green);border-radius:2px;transition:width .6s ease}
+    .logout-btn{width:100%;background:transparent;border:1px solid var(--border);border-radius:var(--r8);padding:7px;font-family:var(--font);font-size:.75rem;color:var(--text-3);cursor:pointer;transition:all .2s;font-weight:500}
+    .logout-btn:hover{border-color:var(--border-2);color:var(--text-2)}
+
+    /* MAIN */
+    .main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{height:60px;border-bottom:1px solid var(--border);background:rgba(3,7,18,.8);backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:40}
+    .topbar-left .page-title{font-size:1rem;font-weight:700}
+    .topbar-left .page-sub{font-size:.75rem;color:var(--text-2);font-family:var(--mono)}
+    .topbar-right{display:flex;align-items:center;gap:10px}
+    .btn{display:inline-flex;align-items:center;gap:7px;font-family:var(--font);font-size:.82rem;font-weight:600;padding:8px 18px;border-radius:var(--r8);border:none;cursor:pointer;transition:all .2s;text-decoration:none}
+    .btn-primary{background:var(--green);color:#020a05}
+    .btn-primary:hover{background:#1dff90;box-shadow:var(--green-glow)}
+
+    /* CONTENT */
+    .content{padding:28px;flex:1}
+
+    /* STATS */
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+    .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r16);padding:20px;position:relative;overflow:hidden;transition:border-color .2s}
+    .stat-card:hover{border-color:var(--border-2)}
+    .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px}
+    .stat-card.g::before{background:linear-gradient(90deg,transparent,rgba(0,230,118,.4),transparent)}
+    .stat-card.b::before{background:linear-gradient(90deg,transparent,rgba(68,136,255,.4),transparent)}
+    .stat-card.r::before{background:linear-gradient(90deg,transparent,rgba(255,68,102,.4),transparent)}
+    .stat-card.y::before{background:linear-gradient(90deg,transparent,rgba(255,214,0,.4),transparent)}
+    .stat-icon{width:38px;height:38px;border-radius:var(--r8);display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:14px;border:1px solid}
+    .stat-card.g .stat-icon{background:var(--green-d);border-color:rgba(0,230,118,.2)}
+    .stat-card.b .stat-icon{background:var(--blue-d);border-color:rgba(68,136,255,.2)}
+    .stat-card.r .stat-icon{background:var(--red-d);border-color:rgba(255,68,102,.2)}
+    .stat-card.y .stat-icon{background:var(--yellow-d);border-color:rgba(255,214,0,.2)}
+    .stat-val{font-size:1.9rem;font-weight:900;letter-spacing:-.04em;margin-bottom:4px;font-family:var(--mono)}
+    .stat-card.g .stat-val{color:var(--green)}
+    .stat-card.b .stat-val{color:var(--blue)}
+    .stat-card.r .stat-val{color:var(--red)}
+    .stat-card.y .stat-val{color:var(--yellow)}
+    .stat-lbl{font-size:.75rem;color:var(--text-2);font-weight:500}
+    .stat-sub{font-family:var(--mono);font-size:.63rem;color:var(--text-3);margin-top:4px}
+
+    /* GRID LAYOUT */
+    .grid-2{display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start}
+
+    /* SCAN HISTORY */
+    .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r16);overflow:hidden}
+    .panel-hd{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border)}
+    .panel-title{font-size:.9rem;font-weight:700;display:flex;align-items:center;gap:9px}
+    .panel-ic{width:28px;height:28px;background:var(--elevated);border:1px solid var(--border);border-radius:var(--r8);display:flex;align-items:center;justify-content:center;font-size:13px}
+    .panel-link{font-size:.75rem;font-weight:600;color:var(--green);text-decoration:none;font-family:var(--mono);opacity:.8;transition:opacity .2s}
+    .panel-link:hover{opacity:1}
+    .scan-row{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--border);transition:background .2s;cursor:default}
+    .scan-row:last-child{border-bottom:none}
+    .scan-row:hover{background:rgba(255,255,255,.025)}
+    .scan-url-wrap{flex:1;min-width:0}
+    .scan-url{font-family:var(--mono);font-size:.82rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+    .scan-date{font-family:var(--mono);font-size:.65rem;color:var(--text-3)}
+    .risk-pill{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:.62rem;font-weight:700;padding:3px 10px;border-radius:50px;flex-shrink:0}
+    .risk-pill.LOW{background:var(--green-d);color:var(--green);border:1px solid rgba(0,230,118,.2)}
+    .risk-pill.MEDIUM{background:var(--yellow-d);color:var(--yellow);border:1px solid rgba(255,214,0,.2)}
+    .risk-pill.HIGH{background:var(--red-d);color:var(--red);border:1px solid rgba(255,68,102,.2)}
+    .risk-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+    .scan-score{font-family:var(--mono);font-size:.8rem;font-weight:700;width:36px;text-align:right;flex-shrink:0}
+
+    .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:52px 24px;text-align:center;gap:12px}
+    .empty-ico{font-size:36px;opacity:.5}
+    .empty-title{font-size:.9rem;font-weight:700;color:var(--text-2)}
+    .empty-sub{font-family:var(--mono);font-size:.75rem;color:var(--text-3);line-height:1.6;max-width:260px}
+
+    /* QUICK SCAN PANEL */
+    .quick-scan-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r16);overflow:hidden;margin-bottom:20px}
+    .qscan-body{padding:22px}
+    .qscan-title{font-size:.88rem;font-weight:700;margin-bottom:4px}
+    .qscan-sub{font-size:.75rem;color:var(--text-2);font-family:var(--mono);margin-bottom:16px}
+    .qscan-input{width:100%;background:var(--elevated);border:1px solid var(--border);border-radius:var(--r8);padding:10px 14px;font-family:var(--mono);font-size:.82rem;color:var(--text);outline:none;transition:all .2s;caret-color:var(--green);margin-bottom:10px}
+    .qscan-input::placeholder{color:var(--text-3)}
+    .qscan-input:focus{border-color:rgba(0,230,118,.35);box-shadow:0 0 0 3px rgba(0,230,118,.07)}
+    .qscan-btn{width:100%;background:var(--green);color:#020a05;border:none;border-radius:var(--r8);padding:11px;font-family:var(--font);font-size:.85rem;font-weight:700;cursor:pointer;transition:all .2s}
+    .qscan-btn:hover{background:#1dff90;box-shadow:var(--green-glow)}
+    .qscan-btn:disabled{opacity:.5;cursor:not-allowed}
+
+    /* PLAN CARD */
+    .plan-card{background:linear-gradient(135deg,rgba(0,230,118,.08) 0%,rgba(68,136,255,.05) 100%);border:1px solid rgba(0,230,118,.2);border-radius:var(--r16);padding:22px}
+    .plan-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .plan-name{font-size:.88rem;font-weight:800;letter-spacing:-.01em}
+    .plan-icon{font-size:22px}
+    .plan-features{display:flex;flex-direction:column;gap:7px;margin-bottom:18px}
+    .plan-feat{display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--text-2)}
+    .plan-feat::before{content:'✓';color:var(--green);font-weight:700;font-size:.72rem;flex-shrink:0}
+    .upgrade-btn{width:100%;background:var(--green);color:#020a05;border:none;border-radius:var(--r8);padding:11px;font-family:var(--font);font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s}
+    .upgrade-btn:hover{background:#1dff90;box-shadow:var(--green-glow)}
+
+    /* AUTH OVERLAY */
+    .auth-overlay{position:fixed;inset:0;z-index:200;background:rgba(3,7,18,.95);backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:center;padding:16px}
+    .auth-overlay.hidden{display:none}
+    .auth-box{background:var(--surface);border:1px solid var(--border-2);border-radius:var(--r24);padding:36px;width:100%;max-width:400px;animation:au .3s cubic-bezier(.16,1,.3,1)}
+    @keyframes au{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .auth-tabs{display:flex;gap:3px;background:var(--elevated);padding:3px;border-radius:var(--r12);margin-bottom:22px}
+    .auth-tab{flex:1;padding:8px;text-align:center;font-size:.78rem;font-weight:600;cursor:pointer;border-radius:var(--r8);transition:all .2s;color:var(--text-3)}
+    .auth-tab.on{background:var(--surface);color:var(--text);border:1px solid var(--border-2)}
+    .auth-field{margin-bottom:14px}
+    .auth-lbl{display:block;font-size:.68rem;font-weight:600;color:var(--text-3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:7px;font-family:var(--mono)}
+    .auth-input{width:100%;background:var(--elevated);border:1px solid var(--border);border-radius:var(--r12);padding:12px 14px;font-family:var(--mono);font-size:.85rem;color:var(--text);outline:none;transition:all .2s;caret-color:var(--green)}
+    .auth-input::placeholder{color:var(--text-3)}
+    .auth-input:focus{border-color:rgba(0,230,118,.35);box-shadow:0 0 0 3px rgba(0,230,118,.07)}
+    .auth-submit{width:100%;background:var(--green);color:#020a05;border:none;border-radius:var(--r12);padding:13px;font-size:.88rem;font-weight:700;cursor:pointer;transition:all .2s;margin-top:6px}
+    .auth-submit:hover{background:#1dff90}
+    .auth-submit:disabled{opacity:.5;cursor:not-allowed}
+    .auth-err{font-family:var(--mono);font-size:.73rem;color:var(--red);background:var(--red-d);border:1px solid rgba(255,68,102,.15);border-radius:var(--r8);padding:9px 13px;margin-top:10px;display:none}
+    .auth-err.show{display:block}
+
+    /* LOADING SPINNER */
+    .spinner{width:16px;height:16px;border:2px solid rgba(2,10,5,.3);border-top-color:#020a05;border-radius:50%;animation:spin .6s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    @media(max-width:800px){
+      .sidebar{display:none}
+      .main{margin-left:0}
+      .stats-grid{grid-template-columns:repeat(2,1fr)}
+      .grid-2{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <a class="sidebar-logo" href="/">
+    <div class="logo-ic">🛡️</div>
+    <div class="logo-tx">Vulnexus<span>AI</span></div>
+  </a>
+  <nav class="sidebar-nav">
+    <a class="nav-item" href="/"><span>🔍</span>Scanner</a>
+    <a class="nav-item active" href="/dashboard.html"><span>📊</span>Dashboard</a>
+    <button class="nav-item" onclick="scrollTo(0,document.body.scrollHeight)"><span>📋</span>Histórico</button>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="user-card" id="sidebarUser">
+      <!-- preenchido por JS -->
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub" id="topTime">—</div>
+    </div>
+    <div class="topbar-right">
+      <a class="btn btn-primary" href="/">+ Novo Scan</a>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card g">
+        <div class="stat-icon">🔍</div>
+        <div class="stat-val" id="stTotal">—</div>
+        <div class="stat-lbl">Total de Scans</div>
+        <div class="stat-sub">todos os tempos</div>
+      </div>
+      <div class="stat-card b">
+        <div class="stat-icon">📅</div>
+        <div class="stat-val" id="stHoje">—</div>
+        <div class="stat-lbl">Scans Hoje</div>
+        <div class="stat-sub" id="stLimite">limite: —</div>
+      </div>
+      <div class="stat-card r">
+        <div class="stat-icon">🚨</div>
+        <div class="stat-val" id="stVulns">—</div>
+        <div class="stat-lbl">Vulnerabilidades</div>
+        <div class="stat-sub">detectadas no total</div>
+      </div>
+      <div class="stat-card y">
+        <div class="stat-icon">📈</div>
+        <div class="stat-val" id="stScore">—</div>
+        <div class="stat-lbl">Score Médio</div>
+        <div class="stat-sub">últimos scans</div>
+      </div>
+    </div>
+
+    <!-- GRID -->
+    <div class="grid-2">
+      <!-- HISTORY -->
+      <div class="panel">
+        <div class="panel-hd">
+          <div class="panel-title">
+            <div class="panel-ic">📋</div>
+            Histórico de Scans
+          </div>
+          <a class="panel-link" href="/">+ Novo scan</a>
+        </div>
+        <div id="historyList">
+          <div class="empty-state">
+            <div class="empty-ico">🌐</div>
+            <div class="empty-title">Carregando histórico...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div>
+        <!-- QUICK SCAN -->
+        <div class="quick-scan-card">
+          <div class="panel-hd">
+            <div class="panel-title"><div class="panel-ic">⚡</div>Scan Rápido</div>
+          </div>
+          <div class="qscan-body">
+            <div class="qscan-sub">Analise uma URL diretamente</div>
+            <input type="url" id="qUrl" class="qscan-input" placeholder="https://api.suaempresa.com">
+            <button class="qscan-btn" id="qBtn" onclick="quickScan()">Analisar agora →</button>
+            <div id="qResult" style="margin-top:12px;font-family:var(--mono);font-size:.75rem;display:none"></div>
+          </div>
+        </div>
+
+        <!-- PLAN -->
+        <div class="plan-card" id="planCard">
+          <div class="plan-hd">
+            <div>
+              <div style="font-size:.62rem;color:var(--text-2);text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);margin-bottom:4px">Seu Plano</div>
+              <div class="plan-name" id="planName">Free</div>
+            </div>
+            <div class="plan-icon">⭐</div>
+          </div>
+          <div class="plan-features">
+            <div class="plan-feat" id="pFeat1">3 scans por dia</div>
+            <div class="plan-feat">9 verificações de segurança</div>
+            <div class="plan-feat">Análise com IA (Gemini + Groq)</div>
+            <div class="plan-feat" id="pFeat2">Histórico de 10 scans</div>
+          </div>
+          <div style="margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+              <span style="font-family:var(--mono);font-size:.65rem;color:var(--text-3)">Uso hoje</span>
+              <span style="font-family:var(--mono);font-size:.65rem;color:var(--text-2)" id="planUsage">0/3</span>
+            </div>
+            <div class="usage-track"><div class="usage-fill" id="planFill" style="width:0%"></div></div>
+          </div>
+          <button class="upgrade-btn" onclick="alert('Em breve: planos Pro com scans ilimitados e relatórios avançados!')">⚡ Upgrade para Pro</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH OVERLAY -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-box">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px">
+      <div class="logo-ic" style="width:38px;height:38px;font-size:18px">🛡️</div>
+      <div>
+        <div class="logo-tx" style="font-size:.95rem">Vulnexus<span style="color:var(--green)">AI</span></div>
+        <div style="font-size:.7rem;color:var(--text-3);font-family:var(--mono)">Faça login para continuar</div>
+      </div>
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab on" id="tabE" onclick="setAba('e')">Entrar</div>
+      <div class="auth-tab" id="tabC" onclick="setAba('c')">Criar conta</div>
+    </div>
+    <div id="formE">
+      <div class="auth-field"><label class="auth-lbl">Email</label><input type="email" id="lEmail" class="auth-input" placeholder="seu@email.com"></div>
+      <div class="auth-field"><label class="auth-lbl">Senha</label><input type="password" id="lSenha" class="auth-input" placeholder="Sua senha"></div>
+      <button class="auth-submit" id="btnE" onclick="login()">Entrar</button>
+      <div class="auth-err" id="errE"></div>
+    </div>
+    <div id="formC" style="display:none">
+      <div class="auth-field"><label class="auth-lbl">Email</label><input type="email" id="cEmail" class="auth-input" placeholder="seu@email.com"></div>
+      <div class="auth-field"><label class="auth-lbl">Senha</label><input type="password" id="cSenha" class="auth-input" placeholder="Mín. 6 caracteres"></div>
+      <button class="auth-submit" id="btnC" onclick="cadastro()">Criar conta grátis</button>
+      <div class="auth-err" id="errC"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = "";
+let token = null, user = null;
+
+// ─── AUTH ──────────────────────────────────────────────────────
+function setAba(a){
+  ['e','c'].forEach(x=>{
+    document.getElementById('tab'+x.toUpperCase()).classList.toggle('on',x===a);
+    document.getElementById('form'+x.toUpperCase()).style.display=x===a?'block':'none';
+  });
+}
+
+async function login(){
+  const email=document.getElementById('lEmail').value.trim(),senha=document.getElementById('lSenha').value;
+  const err=document.getElementById('errE'),btn=document.getElementById('btnE');
+  err.classList.remove('show');
+  if(!email||!senha){err.textContent='Preencha email e senha.';err.classList.add('show');return;}
+  btn.disabled=true; btn.innerHTML=`<span class="spinner"></span>Entrando...`;
+  try{
+    const r=await fetch(`${API}/api/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,senha})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.erro||'Credenciais inválidas');
+    salvarSessao(d.access_token,d.user);
+    inicializar();
+  }catch(e){err.textContent=e.message;err.classList.add('show');}
+  finally{btn.disabled=false;btn.textContent='Entrar';}
+}
+
+async function cadastro(){
+  const email=document.getElementById('cEmail').value.trim(),senha=document.getElementById('cSenha').value;
+  const err=document.getElementById('errC'),btn=document.getElementById('btnC');
+  err.classList.remove('show');
+  if(!email||!senha){err.textContent='Preencha email e senha.';err.classList.add('show');return;}
+  if(senha.length<6){err.textContent='Senha: mín. 6 caracteres.';err.classList.add('show');return;}
+  btn.disabled=true;btn.innerHTML=`<span class="spinner"></span>Criando conta...`;
+  try{
+    const r=await fetch(`${API}/api/auth/signup`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,senha})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.erro||'Erro ao criar conta');
+    if(d.access_token){salvarSessao(d.access_token,d.user);inicializar();}
+    else{err.style.color='var(--green)';err.textContent='✓ Conta criada! Verifique seu email.';err.classList.add('show');}
+  }catch(e){err.textContent=e.message;err.classList.add('show');}
+  finally{btn.disabled=false;btn.textContent='Criar conta grátis';}
+}
+
+function salvarSessao(t,u){
+  token=t;user=u;
+  localStorage.setItem('vx_t',t);
+  localStorage.setItem('vx_u',JSON.stringify(u));
+}
+function logout(){
+  token=null;user=null;
+  localStorage.removeItem('vx_t');localStorage.removeItem('vx_u');
+  location.reload();
+}
+
+function renderSidebar(){
+  const d=document.getElementById('sidebarUser');
+  if(!user){d.innerHTML='<div style="font-family:var(--mono);font-size:.72rem;color:var(--text-3)">Não autenticado</div>';return;}
+  const ini=(user.email||'?')[0].toUpperCase();
+  d.innerHTML=`
+    <div class="user-top">
+      <div class="user-av">${ini}</div>
+      <div class="user-info">
+        <div class="user-name">${user.email}</div>
+        <div class="user-plan"><span class="plan-badge badge-free" id="sidebarPlanBadge">free</span></div>
+      </div>
+    </div>
+    <div class="usage-bar" id="sidebarUsage" style="display:none">
+      <div class="usage-label">
+        <span class="usage-lbl">Scans hoje</span>
+        <span class="usage-lbl" id="sidebarUsageTxt">0/3</span>
+      </div>
+      <div class="usage-track"><div class="usage-fill" id="sidebarUsageFill" style="width:0%"></div></div>
+    </div>
+    <button class="logout-btn" onclick="logout()">Sair da conta</button>`;
+}
+
+// ─── DATA LOADING ──────────────────────────────────────────────
+async function carregarUsage(){
+  try{
+    const r=await fetch(`${API}/api/user/usage`,{headers:{Authorization:'Bearer '+token}});
+    if(!r.ok) return;
+    const d=await r.json();
+    const hoje=d.scans_hoje||0, limite=typeof d.limite_diario==='number'?d.limite_diario:3;
+    const restantes=typeof d.restantes==='number'?d.restantes:'ilimitado';
+    const pct= limite>0 ? Math.min(100,(hoje/limite)*100) : 0;
+    document.getElementById('stHoje').textContent=hoje;
+    document.getElementById('stLimite').textContent=`limite: ${d.limite_diario}`;
+    document.getElementById('planName').textContent=d.plano==='pro'?'Pro ⭐':'Free';
+    document.getElementById('planUsage').textContent=`${hoje}/${d.limite_diario}`;
+    document.getElementById('planFill').style.width=pct+'%';
+    // Sidebar usage
+    const su=document.getElementById('sidebarUsage');
+    if(su){
+      su.style.display='';
+      document.getElementById('sidebarUsageTxt').textContent=`${hoje}/${d.limite_diario}`;
+      document.getElementById('sidebarUsageFill').style.width=pct+'%';
+    }
+    const pb=document.getElementById('sidebarPlanBadge');
+    if(pb){pb.textContent=d.plano;pb.className='plan-badge '+(d.plano==='pro'?'badge-pro':'badge-free');}
+  }catch(e){console.error('[usage]',e);}
+}
+
+async function carregarHistorico(){
+  const hl=document.getElementById('historyList');
+  try{
+    const r=await fetch(`${API}/api/scans`,{headers:{Authorization:'Bearer '+token}});
+    if(!r.ok) throw new Error('Erro ao buscar histórico');
+    const d=await r.json();
+    const scans=d.scans||[];
+
+    if(scans.length===0){
+      hl.innerHTML=`<div class="empty-state">
+        <div class="empty-ico">📭</div>
+        <div class="empty-title">Nenhum scan ainda</div>
+        <div class="empty-sub">Faça seu primeiro scan de segurança usando o botão "+ Novo Scan" acima.</div>
+      </div>`;
+      document.getElementById('stTotal').textContent='0';
+      document.getElementById('stVulns').textContent='0';
+      document.getElementById('stScore').textContent='—';
+      return;
+    }
+
+    // Stats
+    document.getElementById('stTotal').textContent=scans.length;
+    const totalVulns=scans.reduce((a,s)=>a+(s.result?.scan?.total_problemas||0),0);
+    document.getElementById('stVulns').textContent=totalVulns;
+    const scores=scans.filter(s=>s.score!==undefined&&s.score!==null);
+    if(scores.length>0){
+      const avg=Math.round(scores.reduce((a,s)=>a+s.score,0)/scores.length);
+      document.getElementById('stScore').textContent=avg;
+    }else document.getElementById('stScore').textContent='—';
+
+    // Render rows
+    hl.innerHTML=scans.map(s=>{
+      const risk=(s.nivel_risco||'MEDIUM').toUpperCase();
+      const score=s.score??'—';
+      const date=s.data?new Date(s.data).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
+      const url=s.url.replace(/^https?:\/\//,'');
+      return `<div class="scan-row">
+        <div class="scan-url-wrap">
+          <div class="scan-url">${escHtml(url)}</div>
+          <div class="scan-date">${date}</div>
+        </div>
+        <div class="risk-pill ${risk}"><div class="risk-dot"></div>${risk}</div>
+        <div class="scan-score" style="color:${risk==='HIGH'?'var(--red)':risk==='MEDIUM'?'var(--yellow)':'var(--green)'}">${score}</div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    hl.innerHTML=`<div class="empty-state">
+      <div class="empty-ico">⚠️</div>
+      <div class="empty-title">Erro ao carregar</div>
+      <div class="empty-sub">${escHtml(e.message)}</div>
+    </div>`;
+  }
+}
+
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ─── QUICK SCAN ────────────────────────────────────────────────
+async function quickScan(){
+  const url=document.getElementById('qUrl').value.trim();
+  const btn=document.getElementById('qBtn');
+  const res=document.getElementById('qResult');
+  if(!url){return;}
+  if(!url.startsWith('http')){alert('Use https:// no início.');return;}
+  btn.disabled=true; btn.innerHTML=`<span class="spinner"></span>Analisando...`;
+  res.style.display='none';
+  try{
+    const r=await fetch(`${API}/api/scan`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({url}),
+      signal:AbortSignal.timeout(65000)
+    });
+    const d=await r.json();
+    if(r.status===401){logout();return;}
+    if(!r.ok) throw new Error(d.erro||`Erro ${r.status}`);
+    const risk=(d.scan?.nivel_risco||'MEDIUM').toUpperCase();
+    const col=risk==='HIGH'?'var(--red)':risk==='MEDIUM'?'var(--yellow)':'var(--green)';
+    res.style.display='block';
+    res.innerHTML=`<div style="background:var(--elevated);border:1px solid var(--border);border-radius:var(--r8);padding:10px;color:${col}">
+      ✓ Score: <strong>${d.scan?.score_seguranca}</strong> · Risco: <strong>${risk}</strong> · ${d.scan?.total_problemas} vulnerabilidades
+    </div>`;
+    carregarHistorico();
+    carregarUsage();
+  }catch(e){
+    res.style.display='block';
+    res.innerHTML=`<div style="color:var(--red);font-size:.72rem">${e.message}</div>`;
+  }finally{
+    btn.disabled=false;btn.textContent='Analisar agora →';
+  }
+}
+
+// ─── INIT ──────────────────────────────────────────────────────
+function inicializar(){
+  document.getElementById('authOverlay').classList.add('hidden');
+  renderSidebar();
+  document.getElementById('topTime').textContent=new Date().toLocaleString('pt-BR');
+  carregarUsage();
+  carregarHistorico();
+}
+
+// Restaurar sessão
+try{
+  const t=localStorage.getItem('vx_t'),u=localStorage.getItem('vx_u');
+  if(t&&u){token=t;user=JSON.parse(u);}
+}catch(e){}
+
+if(token&&user) inicializar();
+else { document.getElementById('authOverlay').classList.remove('hidden'); renderSidebar(); }
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!document.getElementById('authOverlay').classList.contains('hidden')){
+    if(document.getElementById('formE').style.display!=='none')login();else cadastro();
+  }
+  if(e.key==='Enter'&&document.getElementById('qUrl')===document.activeElement)quickScan();
+});
+</script>
+</body>
+</html>
