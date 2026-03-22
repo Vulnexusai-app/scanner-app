@@ -617,7 +617,10 @@ function renderHeader(){
     if(dl) dl.style.display='';
     if(dbf) dbf.style.display='';
   }else{
-    d.innerHTML=`<button class="btn btn-primary" onclick="abrirModal()">Entrar / Cadastrar</button>`;
+    d.innerHTML=`<div style="display:flex;gap:8px">
+      <button class="btn btn-ghost" onclick="abrirModal();setAba('e')">Entrar</button>
+      <button class="btn btn-primary" onclick="abrirModal();setAba('c')">Criar conta</button>
+    </div>`;
     if(dl) dl.style.display='none';
     if(dbf) dbf.style.display='none';
   }
