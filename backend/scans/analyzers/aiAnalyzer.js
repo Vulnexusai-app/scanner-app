@@ -60,6 +60,7 @@ async function analisarComGroq(relatorio, apiKey) {
 async function analisarComIA(relatorio, config) {
   const { GEMINI_API_KEY, GROQ_API_KEY } = config;
 
+  // Tenta Gemini primeiro
   if (GEMINI_API_KEY) {
     try {
       const analise = await analisarComGemini(relatorio, GEMINI_API_KEY);
@@ -68,18 +69,29 @@ async function analisarComIA(relatorio, config) {
       console.warn(`[IA] Gemini falhou: ${erro.message}`);
     }
   }
-  
+
+  // Fallback para Groq
   if (GROQ_API_KEY) {
     try {
       const analise = await analisarComGroq(relatorio, GROQ_API_KEY);
       return { analise, provedor: "groq" };
     } catch (erro) {
-      console.error(`[IA] Groq falhou: ${erro.message}`);
-      throw new Error("Ambas as IAs falharam. Verifique suas API keys.");
+      console.warn(`[IA] Groq falhou: ${erro.message}`);
     }
   }
-  
-  return { analise: "Configure GEMINI_API_KEY ou GROQ_API_KEY para análise com IA.", provedor: "local" };
+
+  // Nenhuma IA disponível — gera resumo baseado nos dados do scan
+  const analise = gerarAnaliseLocal(relatorio);
+  return { analise, provedor: "local" };
+}
+
+function gerarAnaliseLocal(relatorio) {
+  const { nivel_risco, score_seguranca, total_problemas, issues } = relatorio;
+  if (total_problemas === 0) {
+    return `✅ Nenhum problema crítico encontrado. Score: ${score_seguranca}/100. Mantenha suas bibliotecas atualizadas e monitore sua API regularmente.`;
+  }
+  const lista = (issues || []).slice(0, 5).map(i => `• ${i}`).join("\n");
+  return `⚠️ Foram encontrados ${total_problemas} problema(s) de segurança. Nível de risco: ${nivel_risco}. Score: ${score_seguranca}/100.\n\nPrincipais issues:\n${lista}\n\n💡 Recomendação: corrija os headers de segurança ausentes e revise as configurações de CORS e autenticação da sua API.`;
 }
 
 module.exports = { analisarComIA };
