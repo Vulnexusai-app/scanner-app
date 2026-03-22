@@ -107,7 +107,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/health", (req, res) => {
-  let pkgVersion = "3.0.0";
+  let pkgVersion = "5.0.0";
   try {
     pkgVersion = require("../package.json").version;
   } catch (e) {}

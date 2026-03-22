@@ -1,6 +1,6 @@
 {
   "name": "vulnexusai-saas-scanner",
-  "version": "3.0.0",
+  "version": "5.0.0",
   "description": "SaaS Scanner de vulnerabilidades — produção hardened",
   "main": "src/app.js",
   "scripts": {
