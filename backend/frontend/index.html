@@ -48,6 +48,40 @@
     .logo-name em{font-style:normal;color:var(--green)}
     .header-right{display:flex;align-items:center;gap:12px}
     .header-pill{display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:.65rem;color:var(--text-secondary);background:var(--bg-surface);border:1px solid var(--border-dim);padding:5px 11px;border-radius:50px;letter-spacing:.04em}
+    /* AUTH BUTTON */
+    .auth-btn{display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:.68rem;font-weight:600;color:#03050c;background:var(--green);border:none;padding:7px 16px;border-radius:50px;cursor:pointer;transition:all .2s;letter-spacing:.01em}
+    .auth-btn:hover{background:#1aff95;box-shadow:var(--green-glow-sm)}
+    .auth-btn.ghost{color:var(--text-secondary);background:transparent;border:1px solid var(--border-mid)}
+    .auth-btn.ghost:hover{color:var(--text-primary);border-color:var(--border-glow)}
+    .user-chip{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:.65rem;color:var(--text-secondary);background:var(--bg-surface);border:1px solid var(--border-dim);padding:5px 12px 5px 8px;border-radius:50px}
+    .user-avatar{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,var(--green),#00b894);display:flex;align-items:center;justify-content:center;font-size:10px;color:#000;font-weight:700}
+    /* AUTH MODAL */
+    .modal-overlay{position:fixed;inset:0;z-index:1000;background:rgba(3,5,12,.85);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;padding:24px;animation:fade-in .2s ease}
+    .modal-overlay.hidden{display:none}
+    @keyframes fade-in{from{opacity:0}to{opacity:1}}
+    .auth-modal{background:var(--bg-surface);border:1px solid var(--border-mid);border-radius:24px;padding:40px;width:100%;max-width:420px;position:relative;animation:modal-up .3s var(--ease-out);box-shadow:0 40px 80px rgba(0,0,0,.6)}
+    @keyframes modal-up{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .modal-close{position:absolute;top:16px;right:16px;width:30px;height:30px;background:var(--bg-elevated);border:1px solid var(--border-dim);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--text-secondary);transition:all .2s}
+    .modal-close:hover{border-color:var(--border-mid);color:var(--text-primary)}
+    .modal-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+    .modal-logo-mark{width:36px;height:36px;background:var(--green-dim);border:1px solid var(--border-glow);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px}
+    .modal-title{font-size:1.4rem;font-weight:800;letter-spacing:-.03em;margin-bottom:6px}
+    .modal-sub{font-family:var(--font-mono);font-size:.72rem;color:var(--text-secondary);margin-bottom:28px;line-height:1.5}
+    .auth-tabs{display:flex;gap:4px;background:var(--bg-base);padding:4px;border-radius:12px;margin-bottom:24px}
+    .auth-tab{flex:1;padding:8px;text-align:center;font-family:var(--font-mono);font-size:.72rem;font-weight:600;cursor:pointer;border-radius:9px;transition:all .2s;color:var(--text-secondary)}
+    .auth-tab.active{background:var(--bg-elevated);color:var(--text-primary);border:1px solid var(--border-mid)}
+    .auth-field{margin-bottom:16px}
+    .auth-label{display:block;font-family:var(--font-mono);font-size:.62rem;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px}
+    .auth-input{width:100%;background:var(--bg-base);border:1px solid var(--border-dim);border-radius:10px;padding:12px 14px;font-family:var(--font-mono);font-size:.85rem;color:var(--text-primary);outline:none;transition:all .2s;caret-color:var(--green)}
+    .auth-input::placeholder{color:var(--text-dim)}
+    .auth-input:focus{border-color:rgba(0,255,136,.3);background:var(--bg-elevated);box-shadow:0 0 0 3px rgba(0,255,136,.06)}
+    .auth-submit{width:100%;background:var(--green);color:#03050c;border:none;border-radius:11px;padding:13px;font-family:var(--font-display);font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s;margin-top:8px;position:relative;overflow:hidden}
+    .auth-submit::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.15),transparent)}
+    .auth-submit:hover{transform:translateY(-1px);box-shadow:var(--green-glow);background:#1aff95}
+    .auth-submit:disabled{opacity:.55;cursor:not-allowed;transform:none}
+    .auth-error{font-family:var(--font-mono);font-size:.72rem;color:var(--red);background:rgba(255,59,78,.07);border:1px solid rgba(255,59,78,.15);border-radius:8px;padding:10px 14px;margin-top:12px;display:none}
+    .auth-error.show{display:block}
+    .auth-divider{text-align:center;font-family:var(--font-mono);font-size:.65rem;color:var(--text-dim);margin:16px 0}
     .pill-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse-dot 2.5s ease-in-out infinite}
     @keyframes pulse-dot{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,255,136,.4)}50%{opacity:.7;box-shadow:0 0 0 4px rgba(0,255,136,0)}}
 
@@ -257,8 +291,10 @@
       <div class="logo-name">Vulnexus<em>AI</em></div>
     </a>
     <div class="header-right">
-      <!-- [FUTURE] usage display e login button aqui -->
-      <div class="header-pill"><span class="pill-dot"></span>Sistema operacional</div>
+      <div id="headerAuth">
+        <!-- Ser preenchido pelo JS -->
+        <button class="auth-btn" onclick="abrirModal()">Entrar / Cadastrar</button>
+      </div>
     </div>
   </header>
 
@@ -287,15 +323,11 @@
   </div>
 
   <div class="scanner-card" id="scannerCard">
-    <label class="input-label" for="urlInput">// URL do alvo para análise e JWT Token</label>
+    <label class="input-label" for="urlInput">// URL do alvo para análise</label>
     <div class="input-row">
       <div class="input-wrapper" style="flex:2;">
         <span class="input-prefix">↗</span>
         <input type="url" id="urlInput" class="url-input" placeholder="https://api.suaempresa.com" autocomplete="off" spellcheck="false">
-      </div>
-      <div class="input-wrapper" style="flex:1;">
-        <span class="input-prefix">🔑</span>
-        <input type="text" id="tokenInput" class="url-input" placeholder="Seu JWT Token" autocomplete="off" spellcheck="false">
       </div>
       <button class="scan-btn" id="scanBtn" onclick="iniciarScan()">Scan API →</button>
     </div>
@@ -413,10 +445,182 @@
 
 </div>
 
-<script>
-const API_BASE = ""; // Caminho relativo, pois o backend serve o frontend no mesmo domínio
+<!-- AUTH MODAL -->
+<div class="modal-overlay hidden" id="authModal">
+  <div class="auth-modal">
+    <div class="modal-close" onclick="fecharModal()">✕</div>
+    <div class="modal-logo">
+      <div class="modal-logo-mark">🛡️</div>
+      <div>
+        <div class="logo-name" style="font-size:1rem">Vulnexus<em style="color:var(--green);font-style:normal">AI</em></div>
+      </div>
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tabEntrar" onclick="mudarAba('entrar')">Entrar</div>
+      <div class="auth-tab" id="tabCadastrar" onclick="mudarAba('cadastrar')">Criar conta</div>
+    </div>
+    <div id="authFormEntrar">
+      <div class="auth-field">
+        <label class="auth-label">Email</label>
+        <input type="email" id="loginEmail" class="auth-input" placeholder="seu@email.com">
+      </div>
+      <div class="auth-field">
+        <label class="auth-label">Senha</label>
+        <input type="password" id="loginSenha" class="auth-input" placeholder="Sua senha">
+      </div>
+      <button class="auth-submit" id="btnEntrar" onclick="fazerLogin()">Entrar</button>
+      <div class="auth-error" id="erroEntrar"></div>
+    </div>
+    <div id="authFormCadastrar" style="display:none">
+      <div class="auth-field">
+        <label class="auth-label">Email</label>
+        <input type="email" id="cadastroEmail" class="auth-input" placeholder="seu@email.com">
+      </div>
+      <div class="auth-field">
+        <label class="auth-label">Senha</label>
+        <input type="password" id="cadastroSenha" class="auth-input" placeholder="Mín. 6 caracteres">
+      </div>
+      <button class="auth-submit" id="btnCadastrar" onclick="fazerCadastro()">Criar conta grátis</button>
+      <div class="auth-error" id="erroCadastrar"></div>
+    </div>
+    <div class="auth-divider">3 scans gratuitos por dia — sem cartão</div>
+  </div>
+</div>
 
+<script>
+const API_BASE = "";
+// ─── SUPABASE AUTH CONFIG ────────────────────────────────────
+// Anon key é pública e segura para usar no browser
+const SUPABASE_URL_CLIENT = "https://gazccniqhfmdjkrqjahb.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdhemnjbmlxaGZtZGprcWphaGIiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0MTkwOTM0MywiZXhwIjoyMDU3NDg1MzQzfQ.placeholder";
+
+let jwtToken = null;
+let currentUser = null;
 let scanEmAndamento = false;
+
+// ─── AUTH HELPERS ─────────────────────────────────────────────
+function abrirModal() {
+  document.getElementById('authModal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('loginEmail').focus(), 100);
+}
+function fecharModal() {
+  document.getElementById('authModal').classList.add('hidden');
+}
+function mudarAba(aba) {
+  ['entrar','cadastrar'].forEach(a => {
+    document.getElementById('tab'+a.charAt(0).toUpperCase()+a.slice(1)).classList.toggle('active', a===aba);
+    document.getElementById('authForm'+a.charAt(0).toUpperCase()+a.slice(1)).style.display = a===aba?'block':'none';
+  });
+}
+
+async function fazerLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const senha = document.getElementById('loginSenha').value;
+  const errDiv = document.getElementById('erroEntrar');
+  const btn = document.getElementById('btnEntrar');
+  errDiv.classList.remove('show');
+  if (!email || !senha) { errDiv.textContent='Preencha email e senha.'; errDiv.classList.add('show'); return; }
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  try {
+    const resp = await fetch(`${API_BASE}/api/auth/login`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email, senha})
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.erro||'Credenciais inválidas');
+    setSession(data.access_token, data.user);
+    fecharModal();
+  } catch(e) {
+    errDiv.textContent = e.message; errDiv.classList.add('show');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+}
+
+async function fazerCadastro() {
+  const email = document.getElementById('cadastroEmail').value.trim();
+  const senha = document.getElementById('cadastroSenha').value;
+  const errDiv = document.getElementById('erroCadastrar');
+  const btn = document.getElementById('btnCadastrar');
+  errDiv.classList.remove('show');
+  if (!email || !senha) { errDiv.textContent='Preencha email e senha.'; errDiv.classList.add('show'); return; }
+  if (senha.length < 6) { errDiv.textContent='A senha deve ter ao menos 6 caracteres.'; errDiv.classList.add('show'); return; }
+  btn.disabled = true; btn.textContent = 'Criando conta...';
+  try {
+    const resp = await fetch(`${API_BASE}/api/auth/signup`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email, senha})
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.erro||'Erro ao criar conta');
+    if (data.access_token) {
+      setSession(data.access_token, data.user);
+      fecharModal();
+    } else {
+      errDiv.style.color='var(--green)'; 
+      errDiv.textContent='Conta criada! Verifique seu email para confirmar.';
+      errDiv.classList.add('show');
+    }
+  } catch(e) {
+    errDiv.textContent = e.message; errDiv.classList.add('show');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Criar conta grátis';
+  }
+}
+
+function setSession(token, user) {
+  jwtToken = token;
+  currentUser = user;
+  localStorage.setItem('vx_token', token);
+  localStorage.setItem('vx_user', JSON.stringify(user));
+  renderizarHeader();
+}
+
+function fazerLogout() {
+  jwtToken = null; currentUser = null;
+  localStorage.removeItem('vx_token');
+  localStorage.removeItem('vx_user');
+  renderizarHeader();
+}
+
+function renderizarHeader() {
+  const div = document.getElementById('headerAuth');
+  if (jwtToken && currentUser) {
+    const inicial = (currentUser.email||'?')[0].toUpperCase();
+    div.innerHTML = `
+      <div class="user-chip">
+        <div class="user-avatar">${inicial}</div>
+        <span>${currentUser.email}</span>
+      </div>
+      <button class="auth-btn ghost" onclick="fazerLogout()">Sair</button>`;
+  } else {
+    div.innerHTML = `<button class="auth-btn" onclick="abrirModal()">Entrar / Cadastrar</button>`;
+  }
+}
+
+// Restaurar sessão do localStorage
+(function() {
+  const tk = localStorage.getItem('vx_token');
+  const us = localStorage.getItem('vx_user');
+  if (tk && us) try { jwtToken = tk; currentUser = JSON.parse(us); } catch(e) {}
+  renderizarHeader();
+})();
+
+// Fechar modal ao clicar fora
+document.getElementById('authModal').addEventListener('click', function(e) {
+  if (e.target === this) fecharModal();
+});
+
+// Enter nos campos de auth
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const m = document.getElementById('authModal');
+    if (!m.classList.contains('hidden')) {
+      if (document.getElementById('authFormEntrar').style.display !== 'none') fazerLogin();
+      else fazerCadastro();
+    }
+  }
+});
 
 function esconderTudo() {
   ["loadingCard","resultCard","errorCard"].forEach(id =>
@@ -588,7 +792,6 @@ async function iniciarScan() {
   const urlInput = document.getElementById("urlInput");
   const scanBtn  = document.getElementById("scanBtn");
   const url      = urlInput.value.trim();
-  const token    = document.getElementById("tokenInput").value.trim();
 
   if (!url) {
     urlInput.classList.add("error");
@@ -602,12 +805,8 @@ async function iniciarScan() {
     exibirErro("A URL deve começar com https:// ou http:// — Ex: https://api.seusite.com");
     return;
   }
-  if (!token) {
-    const ti = document.getElementById("tokenInput");
-    ti.classList.add("error");
-    ti.focus();
-    setTimeout(() => ti.classList.remove("error"), 800);
-    exibirErro("Um token JWT é necessário para executar a análise.");
+  if (!jwtToken) {
+    abrirModal();
     return;
   }
 
@@ -626,7 +825,7 @@ async function iniciarScan() {
       method:"POST",
       headers:{
         "Content-Type":"application/json",
-        "Authorization": `Bearer ${token}`
+        "Authorization": `Bearer ${jwtToken}`
       },
       body:JSON.stringify({url}),
       signal:AbortSignal.timeout(65000),
@@ -635,6 +834,12 @@ async function iniciarScan() {
     clearTimeout(t2); clearTimeout(t3);
 
     const data = await resp.json();
+    // Token expirado — força novo login
+    if (resp.status === 401) {
+      fazerLogout();
+      abrirModal();
+      throw new Error("Sessão expirada. Por favor, entre novamente.");
+    }
     if (!resp.ok) throw new Error(data.erro||data.error||`Erro ${resp.status} do servidor`);
     renderizarResultado(data);
 
