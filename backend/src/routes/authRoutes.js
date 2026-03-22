@@ -35,11 +35,16 @@ router.post("/signup", async (req, res) => {
   const { email, senha } = req.body;
   if (!email || !senha) return res.status(400).json({ erro: "Email e senha são obrigatórios" });
   if (senha.length < 6) return res.status(400).json({ erro: "Senha deve ter ao menos 6 caracteres" });
-
   try {
     const resp = await axios.post(
       `${SUPABASE_URL}/auth/v1/signup`,
-      { email, password: senha },
+      { 
+        email, 
+        password: senha,
+        options: {
+          emailRedirectTo: `${process.env.APP_URL || 'https://vulnexusai.com'}/index.html`
+        }
+      },
       {
         headers: { apikey: SUPABASE_ANON_KEY, "Content-Type": "application/json" },
         timeout: 8000,
