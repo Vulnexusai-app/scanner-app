@@ -20,7 +20,7 @@ app.use(express.json());
 log("info", "VulnexusAI SaaS Scanner v3.0 booting...");
 
 // Servir Frontend (Static Files)
-const frontendPath = path.join(__dirname, "../../../frontend");
+const frontendPath = path.join(__dirname, "../frontend");
 app.use(express.static(frontendPath));
 
 // Rotas da API
