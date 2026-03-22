@@ -114,10 +114,10 @@ app.get("/health", (req, res) => {
   })
 });
 
-// Sentry Error Handler
+// Sentry Error Handler (Deve vir após as rotas mas ANTES do fallback/404 se quisermos logar erros de roteamento)
 Sentry.setupExpressErrorHandler(app);
 
-// SPA Fallback: Qualquer rota GET que não seja API retorna index.html
+// SPA Fallback: Qualquer rota GET que não seja arquivo estático e não seja API retorna index.html
 app.get("*", (req, res, next) => {
   if (req.path.startsWith("/api")) return next();
   res.sendFile(path.join(frontendPath, "index.html"));
@@ -129,7 +129,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ erro: "Erro interno do servidor" });
 });
 
-// Catch-all 404 handler for undefined API routes
+// Catch-all 404 handler para rotas de API não definidas ou outros métodos
 app.use((req, res) => {
   if (req.path.startsWith("/api")) {
     return res.status(404).json({ erro: "Rota de API não encontrada" });
