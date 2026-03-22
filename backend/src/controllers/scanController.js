@@ -14,14 +14,27 @@ function validarURL(url) {
 
   try {
     const parsed = new URL(url);
-    if (!["http:", "https:"].includes(parsed.protocol)) return { valida: false, erro: "Apenas http/https permitidos" };
+    if (!["http:", "https:"].includes(parsed.protocol))
+      return { valida: false, erro: "Apenas http/https permitidos" };
+
     const host = parsed.hostname.toLowerCase();
-    const bloqueados = ["localhost", "127.0.0.1", "0.0.0.0", "::1"];
-    if (bloqueados.includes(host)) return { valida: false, erro: "URLs internas não permitidas" };
-    if (/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)) return { valida: false, erro: "IPs privados não permitidos" };
+
+    // Bloqueio SSRF — localhost e redes privadas
+    const bloqueados = ["localhost", "127.0.0.1", "0.0.0.0", "::1", "metadata.google.internal"];
+    if (bloqueados.includes(host))
+      return { valida: false, erro: "URLs internas bloqueadas por segurança (SSRF)" };
+
+    // Link-local AWS/GCP metadata
+    if (host.startsWith("169.254."))
+      return { valida: false, erro: "IP link-local bloqueado (SSRF protection)" };
+
+    // Redes privadas RFC1918
+    if (/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host))
+      return { valida: false, erro: "IPs de rede privada bloqueados (SSRF protection)" };
+
     return { valida: true, urlLimpa: url };
   } catch {
-    return { valida: false, erro: "URL inválida" };
+    return { valida: false, erro: "URL inválida — verifique o formato" };
   }
 }
 
@@ -35,12 +48,12 @@ async function startScan(req, res) {
   try {
     const usuario = await db.buscarOuCriarUsuario(req.usuario.id, req.usuario.email);
     const limite = LIMITES[usuario.plan];
-    
+
     if (limite !== Infinity) {
       const scansHoje = await db.contarScansHoje(req.usuario.id);
       if (scansHoje >= limite) {
         log("warn", "limite_atingido", req.usuario.email, `plano=${usuario.plan}`);
-        return res.status(429).json({ erro: "Limite de scans atingido", plano: usuario.plan });
+        return res.status(429).json({ erro: "Limite de scans atingido para hoje", plano: usuario.plan });
       }
     }
 
@@ -48,15 +61,29 @@ async function startScan(req, res) {
     const relatorio = await escanear(urlLimpa);
     const { analise, provedor } = await analisarComIA(relatorio, config);
 
+    // Resultado padronizado v2
     const resultado = {
+      // Header do resultado
+      url: urlLimpa,
+      timestamp: new Date().toISOString(),
+      ambiente_teste: relatorio.ambiente_teste,
+      ambiente_nota: relatorio.ambiente_nota,
+
+      // Score e risco (nível raiz para acesso rápido no frontend)
+      score: relatorio.score_seguranca,
+      nivel_risco: relatorio.nivel_risco,
+
+      // Dados completos do scan
       scan: relatorio,
+
+      // Análise de IA
       analise,
       provedor_ia: provedor,
-      nivel_risco: relatorio.nivel_risco,
-      timestamp: new Date().toISOString(),
     };
 
-    db.salvarScan(req.usuario.id, urlLimpa, resultado).catch(e => log("error", "salvar_scan_falhou", req.usuario.email, e.message));
+    // Salvar no banco (fire-and-forget — não bloqueia resposta)
+    db.salvarScan(req.usuario.id, urlLimpa, resultado)
+      .catch(e => log("error", "salvar_scan_falhou", req.usuario.email, e.message));
 
     return res.json(resultado);
   } catch (erro) {
@@ -71,8 +98,10 @@ async function getHistory(req, res) {
     const formatado = historico.map(s => ({
       id: s.id,
       url: s.url,
-      score: s.result?.scan?.score_seguranca,
-      nivel_risco: s.result?.scan?.nivel_risco,
+      score: s.result?.score ?? s.result?.scan?.score_seguranca,
+      nivel_risco: s.result?.nivel_risco ?? s.result?.scan?.nivel_risco,
+      ambiente_teste: s.result?.ambiente_teste ?? false,
+      total_problemas: s.result?.scan?.total_problemas ?? 0,
       data: s.created_at,
     }));
     return res.json({ scans: formatado });
