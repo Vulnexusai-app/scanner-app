@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VulnexusAI — Find API Vulnerabilities Before Attackers Do</title>
+  <meta name="description" content="Scan your API for critical security vulnerabilities in seconds. AI-powered analysis with actionable fixes.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-void:#03050c;--bg-base:#06091a;--bg-surface:#0b0f22;--bg-elevated:#0f1429;
+      --border-dim:rgba(255,255,255,0.055);--border-mid:rgba(255,255,255,0.09);
+      --border-glow:rgba(0,255,136,0.22);
+      --green:#00ff88;--green-dim:rgba(0,255,136,0.10);--green-dim2:rgba(0,255,136,0.06);
+      --green-glow:0 0 32px rgba(0,255,136,0.28);--green-glow-sm:0 0 16px rgba(0,255,136,0.20);
+      --yellow:#f5c518;--yellow-dim:rgba(245,197,24,0.10);
+      --red:#ff3b4e;--red-dim:rgba(255,59,78,0.10);
+      --text-primary:#eef2ff;--text-secondary:#7e8fa8;--text-dim:#3d4a5c;
+      --font-display:'Syne',sans-serif;--font-mono:'JetBrains Mono',monospace;
+      --radius-xs:4px;--radius-sm:8px;--radius-md:14px;--radius-lg:20px;--radius-xl:28px;
+      --ease-out:cubic-bezier(0.16,1,0.3,1);--ease-std:cubic-bezier(0.4,0,0.2,1);
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{font-family:var(--font-display);background:var(--bg-void);color:var(--text-primary);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+    /* BG */
+    .bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+      background-image:linear-gradient(rgba(0,255,136,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,0.025) 1px,transparent 1px);
+      background-size:52px 52px;animation:grid-drift 80s linear infinite;
+      mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,black 0%,transparent 100%)}
+    @keyframes grid-drift{0%{transform:translateY(0)}100%{transform:translateY(52px)}}
+    .bg-orb-1{position:fixed;top:-20vh;left:50%;transform:translateX(-50%);width:900px;height:500px;
+      background:radial-gradient(ellipse,rgba(0,255,136,0.07) 0%,rgba(0,255,136,0.02) 40%,transparent 70%);
+      pointer-events:none;z-index:0;animation:orb-breathe 8s ease-in-out infinite}
+    .bg-orb-2{position:fixed;bottom:-30vh;right:-20vw;width:700px;height:500px;
+      background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 70%);pointer-events:none;z-index:0}
+    @keyframes orb-breathe{0%,100%{opacity:1;transform:translateX(-50%) scale(1)}50%{opacity:.7;transform:translateX(-50%) scale(1.05)}}
+
+    .page{position:relative;z-index:1;max-width:800px;margin:0 auto;padding:0 24px 100px}
+
+    /* HEADER */
+    header{display:flex;align-items:center;justify-content:space-between;padding:24px 0;border-bottom:1px solid var(--border-dim)}
+    .logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .logo-mark{width:34px;height:34px;background:linear-gradient(135deg,var(--green-dim),rgba(0,255,136,0.04));border:1px solid var(--border-glow);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:inset 0 1px 0 rgba(0,255,136,0.1)}
+    .logo-name{font-size:1.1rem;font-weight:700;letter-spacing:-.025em;color:var(--text-primary)}
+    .logo-name em{font-style:normal;color:var(--green)}
+    .header-right{display:flex;align-items:center;gap:12px}
+    .header-pill{display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:.65rem;color:var(--text-secondary);background:var(--bg-surface);border:1px solid var(--border-dim);padding:5px 11px;border-radius:50px;letter-spacing:.04em}
+    .pill-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse-dot 2.5s ease-in-out infinite}
+    @keyframes pulse-dot{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,255,136,.4)}50%{opacity:.7;box-shadow:0 0 0 4px rgba(0,255,136,0)}}
+
+    /* URGENCY BAR */
+    .urgency-bar{margin:20px 0 0;padding:10px 16px;background:rgba(255,59,78,0.06);border:1px solid rgba(255,59,78,0.15);border-radius:var(--radius-md);display:flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:.72rem;color:#ff8f99;animation:fade-slide-down .5s var(--ease-out) both}
+    .urgency-bar strong{color:var(--red);font-weight:500}
+    @keyframes fade-slide-down{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+    /* HERO */
+    .hero{text-align:center;padding:56px 0 44px;animation:fade-up .6s var(--ease-out) .1s both}
+    .hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:.68rem;color:var(--green);letter-spacing:.12em;text-transform:uppercase;margin-bottom:22px;opacity:.8}
+    .hero-eyebrow::before,.hero-eyebrow::after{content:'';display:block;width:28px;height:1px;background:linear-gradient(90deg,transparent,var(--green));opacity:.3}
+    .hero-eyebrow::after{background:linear-gradient(90deg,var(--green),transparent)}
+    .hero h1{font-size:clamp(2rem,5.5vw,3.6rem);font-weight:800;line-height:1.08;letter-spacing:-.045em;margin-bottom:20px;color:var(--text-primary)}
+    .hero h1 .line-muted{color:var(--text-secondary);font-weight:600}
+    .hero h1 .accent-danger{color:var(--red);text-shadow:0 0 40px rgba(255,59,78,.3)}
+    .hero-sub{font-size:1.05rem;color:var(--text-secondary);max-width:460px;margin:0 auto 32px;line-height:1.7;font-weight:400}
+    .hero-proofs{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+    .proof-item{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:.7rem;color:var(--text-secondary);background:var(--bg-surface);border:1px solid var(--border-dim);padding:5px 12px;border-radius:50px;transition:all .2s var(--ease-std)}
+    .proof-item:hover{border-color:var(--border-mid);color:var(--text-primary)}
+    .proof-check{color:var(--green);font-size:10px}
+
+    /* SCANNER CARD */
+    .scanner-card{background:var(--bg-surface);border:1px solid var(--border-mid);border-radius:var(--radius-xl);padding:28px;margin-bottom:20px;position:relative;overflow:hidden;transition:border-color .3s var(--ease-std),box-shadow .3s var(--ease-std);animation:fade-up .6s var(--ease-out) .2s both}
+    .scanner-card::before{content:'';position:absolute;top:0;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,rgba(0,255,136,.5),transparent)}
+    .scanner-card:focus-within{border-color:rgba(0,255,136,.3);box-shadow:0 0 0 1px rgba(0,255,136,.1),0 24px 64px rgba(0,0,0,.6)}
+    .input-label{font-family:var(--font-mono);font-size:.65rem;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;display:block}
+    .input-row{display:flex;gap:10px;align-items:stretch}
+    .input-wrapper{flex:1;position:relative}
+    .input-prefix{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-family:var(--font-mono);font-size:.8rem;color:var(--text-dim);pointer-events:none;user-select:none}
+    .url-input{width:100%;background:var(--bg-base);border:1px solid var(--border-dim);border-radius:var(--radius-md);padding:13px 16px 13px 42px;font-family:var(--font-mono);font-size:.88rem;color:var(--text-primary);outline:none;transition:all .2s var(--ease-std);caret-color:var(--green)}
+    .url-input::placeholder{color:var(--text-dim)}
+    .url-input:focus{border-color:rgba(0,255,136,.3);background:var(--bg-elevated);box-shadow:0 0 0 3px rgba(0,255,136,.06)}
+    .url-input.error{border-color:rgba(255,59,78,.4)!important;box-shadow:0 0 0 3px rgba(255,59,78,.06)!important;animation:shake .4s var(--ease-std)}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+    .scan-btn{background:var(--green);color:#03050c;border:none;border-radius:var(--radius-md);padding:13px 26px;font-family:var(--font-display);font-size:.875rem;font-weight:700;letter-spacing:-.01em;cursor:pointer;transition:all .2s var(--ease-std);white-space:nowrap;position:relative;overflow:hidden;flex-shrink:0}
+    .scan-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.15) 0%,transparent 100%);pointer-events:none}
+    .scan-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:var(--green-glow);background:#1aff95}
+    .scan-btn:active:not(:disabled){transform:translateY(0);box-shadow:none}
+    .scan-btn:disabled{opacity:.55;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+    .trust-row{display:flex;align-items:center;justify-content:space-between;margin-top:14px;flex-wrap:wrap;gap:8px}
+    .trust-items{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+    .trust-item{display:flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:.66rem;color:var(--text-dim)}
+    .free-badge{font-family:var(--font-mono);font-size:.65rem;color:var(--green);background:var(--green-dim);border:1px solid var(--border-glow);padding:3px 10px;border-radius:50px}
+
+    /* LOADING */
+    .loading-card{display:none;background:var(--bg-surface);border:1px solid var(--border-dim);border-radius:var(--radius-xl);padding:44px 28px;text-align:center}
+    .loading-card.visible{display:block;animation:fade-up .35s var(--ease-out)}
+    .loading-radar{width:80px;height:80px;margin:0 auto 28px;position:relative}
+    .radar-ring{position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(0,255,136,.18);animation:radar-expand 2.4s ease-out infinite}
+    .radar-ring:nth-child(2){animation-delay:.7s}
+    .radar-ring:nth-child(3){animation-delay:1.4s}
+    .radar-core{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:18px;height:18px;background:var(--green);border-radius:50%;box-shadow:0 0 20px rgba(0,255,136,.6),0 0 40px rgba(0,255,136,.2);animation:core-breathe 2.4s ease-in-out infinite}
+    @keyframes radar-expand{0%{transform:scale(.2);opacity:.8}100%{transform:scale(1.9);opacity:0}}
+    @keyframes core-breathe{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(.75)}}
+    .loading-title{font-size:1.05rem;font-weight:600;letter-spacing:-.02em;margin-bottom:6px}
+    .loading-sub{font-family:var(--font-mono);font-size:.72rem;color:var(--text-secondary);min-height:18px;transition:opacity .3s}
+    .loading-steps{display:flex;justify-content:center;align-items:center;gap:0;margin-top:32px}
+    .step{display:flex;flex-direction:column;align-items:center;gap:8px;font-family:var(--font-mono);font-size:.64rem;color:var(--text-dim);transition:color .4s var(--ease-std);min-width:80px}
+    .step.active{color:var(--green)}.step.done{color:var(--text-secondary)}
+    .step-icon{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border-dim);display:flex;align-items:center;justify-content:center;font-size:14px;background:var(--bg-elevated);transition:all .4s var(--ease-std)}
+    .step.active .step-icon{border-color:var(--border-glow);background:var(--green-dim);box-shadow:var(--green-glow-sm)}
+    .step-connector{width:32px;height:1.5px;background:var(--border-dim);margin-bottom:26px;transition:background .4s}
+    .step-connector.active{background:var(--green);opacity:.4}
+
+    /* ERROR */
+    .error-card{display:none;background:rgba(255,59,78,.05);border:1px solid rgba(255,59,78,.18);border-radius:var(--radius-xl);padding:24px 28px;align-items:flex-start;gap:16px}
+    .error-card.visible{display:flex;animation:fade-up .3s var(--ease-out)}
+    .error-icon-box{width:38px;height:38px;background:var(--red-dim);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;border:1px solid rgba(255,59,78,.15)}
+    .error-title{font-size:.9rem;font-weight:600;color:var(--red);margin-bottom:5px;letter-spacing:-.01em}
+    .error-msg{font-family:var(--font-mono);font-size:.76rem;color:var(--text-secondary);line-height:1.55}
+    .error-retry{margin-top:10px;font-family:var(--font-mono);font-size:.68rem;color:var(--red);cursor:pointer;text-decoration:underline;text-underline-offset:3px;opacity:.7;transition:opacity .2s}
+    .error-retry:hover{opacity:1}
+
+    /* RESULT */
+    .result-card{display:none}
+    .result-card.visible{display:block;animation:fade-up .5s var(--ease-out)}
+    @keyframes fade-up{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+    /* Risk Banner */
+    .risk-banner{border-radius:var(--radius-xl) var(--radius-xl) 0 0;padding:28px 32px;display:flex;align-items:center;justify-content:space-between;gap:20px;border:1px solid transparent;border-bottom:none;position:relative;overflow:hidden}
+    .risk-banner::after{content:'';position:absolute;inset:0;pointer-events:none;background-image:repeating-linear-gradient(-45deg,transparent 0px,transparent 14px,rgba(255,255,255,.012) 14px,rgba(255,255,255,.012) 15px)}
+    .risk-banner.low{background:linear-gradient(135deg,rgba(0,255,136,.07) 0%,rgba(0,255,136,.03) 100%);border-color:rgba(0,255,136,.18)}
+    .risk-banner.medium{background:linear-gradient(135deg,rgba(245,197,24,.07) 0%,rgba(245,197,24,.03) 100%);border-color:rgba(245,197,24,.18)}
+    .risk-banner.high{background:linear-gradient(135deg,rgba(255,59,78,.10) 0%,rgba(255,59,78,.04) 100%);border-color:rgba(255,59,78,.22);box-shadow:0 0 60px rgba(255,59,78,.08)}
+    .risk-left{display:flex;align-items:center;gap:18px;position:relative;z-index:1}
+    .risk-icon-box{width:52px;height:52px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+    .risk-banner.low .risk-icon-box{background:var(--green-dim);border:1px solid rgba(0,255,136,.2)}
+    .risk-banner.medium .risk-icon-box{background:var(--yellow-dim);border:1px solid rgba(245,197,24,.2)}
+    .risk-banner.high .risk-icon-box{background:var(--red-dim);border:1px solid rgba(255,59,78,.25);animation:icon-pulse 2s ease-in-out infinite}
+    @keyframes icon-pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,59,78,.25)}50%{box-shadow:0 0 0 8px rgba(255,59,78,0)}}
+    .risk-eyebrow{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;opacity:.55;margin-bottom:4px}
+    .risk-value{font-size:1.75rem;font-weight:800;letter-spacing:-.04em;line-height:1}
+    .risk-banner.low .risk-value{color:var(--green)}
+    .risk-banner.medium .risk-value{color:var(--yellow)}
+    .risk-banner.high .risk-value{color:var(--red);text-shadow:0 0 30px rgba(255,59,78,.4)}
+    .risk-sub{font-family:var(--font-mono);font-size:.7rem;color:var(--text-secondary);margin-top:4px}
+    .score-dial{position:relative;z-index:1;flex-shrink:0;text-align:center}
+    .score-dial svg{display:block;width:76px;height:76px}
+    .dial-bg{fill:none;stroke:rgba(255,255,255,.06);stroke-width:5}
+    .dial-fill{fill:none;stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset 1s var(--ease-out)}
+    .risk-banner.low .dial-fill{stroke:var(--green);filter:drop-shadow(0 0 4px rgba(0,255,136,.5))}
+    .risk-banner.medium .dial-fill{stroke:var(--yellow)}
+    .risk-banner.high .dial-fill{stroke:var(--red);filter:drop-shadow(0 0 4px rgba(255,59,78,.5))}
+    .dial-label{position:absolute;top:50%;left:50%;transform:translate(-50%,-52%);text-align:center}
+    .dial-number{font-size:1.3rem;font-weight:800;line-height:1;font-family:var(--font-mono)}
+    .risk-banner.low .dial-number{color:var(--green)}
+    .risk-banner.medium .dial-number{color:var(--yellow)}
+    .risk-banner.high .dial-number{color:var(--red)}
+    .dial-unit{font-family:var(--font-mono);font-size:.55rem;color:var(--text-dim);letter-spacing:.06em}
+
+    /* Alert strip */
+    .high-alert-strip{display:none;align-items:center;gap:10px;padding:10px 32px;background:rgba(255,59,78,.08);border-bottom:1px solid rgba(255,59,78,.12);font-family:var(--font-mono);font-size:.7rem;color:#ff8f99}
+    .high-alert-strip.visible{display:flex}
+    .alert-blink{width:7px;height:7px;border-radius:50%;background:var(--red);animation:alert-blink 1s ease-in-out infinite;flex-shrink:0}
+    @keyframes alert-blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+    /* Severity breakdown */
+    .severity-breakdown{background:var(--bg-surface);border:1px solid var(--border-mid);border-top:none;border-bottom:none;padding:20px 32px;display:grid;grid-template-columns:repeat(4,1fr);gap:1px}
+    .sev-cell{padding:0 16px;text-align:center;border-right:1px solid var(--border-dim)}
+    .sev-cell:first-child{padding-left:0}.sev-cell:last-child{border-right:none;padding-right:0}
+    .sev-count{font-family:var(--font-mono);font-size:1.6rem;font-weight:700;line-height:1;margin-bottom:5px}
+    .sev-count.c-high{color:var(--red)}.sev-count.c-medium{color:var(--yellow)}.sev-count.c-low{color:var(--green)}.sev-count.c-total{color:var(--text-primary)}
+    .sev-label{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim)}
+    .sev-bar-track{height:2px;background:var(--border-dim);border-radius:2px;margin-top:8px;overflow:hidden}
+    .sev-bar-fill{height:100%;border-radius:2px;width:0;transition:width .8s var(--ease-out) .3s}
+    .sev-bar-fill.h{background:var(--red)}.sev-bar-fill.m{background:var(--yellow)}.sev-bar-fill.l{background:var(--green)}
+
+    /* Stats row */
+    .stats-row{display:grid;grid-template-columns:repeat(3,1fr);background:var(--bg-surface);border:1px solid var(--border-mid);border-top:none;border-bottom:none}
+    .stat-cell{padding:14px 20px;border-right:1px solid var(--border-dim);text-align:center}
+    .stat-cell:last-child{border-right:none}
+    .stat-num{font-family:var(--font-mono);font-size:1.2rem;font-weight:600;color:var(--text-primary);line-height:1;margin-bottom:4px}
+    .stat-lbl{font-family:var(--font-mono);font-size:.58rem;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase}
+
+    /* Body */
+    .result-body{background:var(--bg-surface);border:1px solid var(--border-mid);border-top:none;border-radius:0 0 var(--radius-xl) var(--radius-xl);overflow:hidden}
+    .section{padding:24px 28px;border-bottom:1px solid var(--border-dim)}
+    .section:last-child{border-bottom:none}
+    .section-header{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+    .section-icon{width:30px;height:30px;border-radius:var(--radius-sm);background:var(--bg-elevated);border:1px solid var(--border-dim);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+    .section-title{font-size:.84rem;font-weight:600;letter-spacing:-.01em}
+    .section-count{margin-left:auto;font-family:var(--font-mono);font-size:.65rem;color:var(--text-dim);background:var(--bg-elevated);border:1px solid var(--border-dim);padding:2px 9px;border-radius:50px}
+
+    /* Issues */
+    .issues-list{display:flex;flex-direction:column;gap:6px}
+    .issue-item{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--bg-elevated);border-radius:var(--radius-md);border:1px solid var(--border-dim);transition:border-color .2s,box-shadow .2s,transform .2s;cursor:default}
+    .issue-item:hover{border-color:var(--border-mid);transform:translateX(2px)}
+    .issue-item.sev-item-HIGH:hover{border-color:rgba(255,59,78,.2)}
+    .issue-item.sev-item-MEDIUM:hover{border-color:rgba(245,197,24,.2)}
+    .issue-sev-tag{font-family:var(--font-mono);font-size:.58rem;font-weight:600;letter-spacing:.1em;padding:3px 8px;border-radius:var(--radius-xs);white-space:nowrap;flex-shrink:0;margin-top:2px}
+    .tag-HIGH{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,59,78,.2)}
+    .tag-MEDIUM{background:var(--yellow-dim);color:var(--yellow);border:1px solid rgba(245,197,24,.2)}
+    .tag-LOW{background:var(--green-dim);color:var(--green);border:1px solid rgba(0,255,136,.15)}
+    .issue-name{font-size:.82rem;font-weight:600;color:var(--text-primary);margin-bottom:3px;letter-spacing:-.01em}
+    .issue-desc{font-family:var(--font-mono);font-size:.73rem;color:var(--text-secondary);line-height:1.5}
+    .no-issues{display:flex;align-items:center;gap:14px;padding:18px 20px;background:var(--green-dim2);border:1px solid rgba(0,255,136,.12);border-radius:var(--radius-md)}
+    .no-issues-icon{width:36px;height:36px;background:var(--green-dim);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+    .no-issues-text .title{font-size:.84rem;font-weight:600;color:var(--green);margin-bottom:2px}
+    .no-issues-text .sub{font-family:var(--font-mono);font-size:.7rem;color:var(--text-secondary)}
+
+    /* AI */
+    .ai-provider-chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:.63rem;color:var(--text-secondary);background:var(--bg-elevated);border:1px solid var(--border-dim);padding:4px 10px;border-radius:50px;margin-bottom:16px}
+    .chip-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse-dot 2.5s ease-in-out infinite}
+    .ai-blocks{display:flex;flex-direction:column;gap:10px}
+    .ai-block{background:var(--bg-elevated);border:1px solid var(--border-dim);border-radius:var(--radius-md);overflow:hidden;transition:border-color .2s}
+    .ai-block:hover{border-color:var(--border-mid)}
+    .ai-block-header{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border-dim);background:rgba(255,255,255,.015)}
+    .ai-block-label{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;font-weight:500}
+    .ai-block-label.issue{color:#ff8a9a}.ai-block-label.impact{color:#ffd06b}.ai-block-label.fix{color:var(--green)}
+    .ai-block-body{padding:12px 14px;font-family:var(--font-mono);font-size:.76rem;color:var(--text-secondary);line-height:1.65;white-space:pre-wrap;word-break:break-word}
+    .ai-raw{font-family:var(--font-mono);font-size:.76rem;color:var(--text-secondary);line-height:1.7;white-space:pre-wrap;word-break:break-word}
+
+    /* Footer */
+    .result-footer{display:flex;align-items:center;justify-content:space-between;padding:13px 28px;background:var(--bg-base);border:1px solid var(--border-mid);border-top:1px solid var(--border-dim);border-radius:0 0 var(--radius-xl) var(--radius-xl);gap:12px}
+    .footer-meta{font-family:var(--font-mono);font-size:.65rem;color:var(--text-dim);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .footer-sep{opacity:.25}
+    .new-scan-btn{font-family:var(--font-mono);font-size:.7rem;color:var(--green);background:var(--green-dim);border:1px solid var(--border-glow);padding:6px 14px;border-radius:50px;cursor:pointer;transition:all .2s var(--ease-std);white-space:nowrap}
+    .new-scan-btn:hover{background:rgba(0,255,136,.16);box-shadow:var(--green-glow-sm)}
+
+    /* Features */
+    .features-strip{display:flex;justify-content:center;gap:24px;padding:44px 0 0;flex-wrap:wrap}
+    .feature{display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:.68rem;color:var(--text-dim);transition:color .2s}
+    .feature:hover{color:var(--text-secondary)}
+    .feature-icon{width:22px;height:22px;background:var(--bg-surface);border:1px solid var(--border-dim);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px}
+
+    @media(max-width:640px){
+      .input-row{flex-direction:column}.scan-btn{width:100%;text-align:center}
+      .severity-breakdown{grid-template-columns:repeat(2,1fr);gap:12px}
+      .sev-cell{border-right:none;padding:0;text-align:left}
+      .risk-banner{flex-direction:column;align-items:flex-start}
+      .features-strip{gap:14px}.trust-row{flex-direction:column;align-items:flex-start}
+      .loading-steps{gap:0}header{gap:12px}
+    }
+  </style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-orb-1"></div>
+<div class="bg-orb-2"></div>
+
+<div class="page">
+
+  <header>
+    <a class="logo" href="#">
+      <div class="logo-mark">🛡️</div>
+      <div class="logo-name">Vulnexus<em>AI</em></div>
+    </a>
+    <div class="header-right">
+      <!-- [FUTURE] usage display e login button aqui -->
+      <div class="header-pill"><span class="pill-dot"></span>Sistema operacional</div>
+    </div>
+  </header>
+
+  <div class="urgency-bar">
+    <span style="font-size:14px;flex-shrink:0">⚠️</span>
+    <span><strong>87% das APIs públicas</strong> têm ao menos uma vulnerabilidade crítica não detectada. A sua pode estar entre elas.</span>
+  </div>
+
+  <div class="hero">
+    <div class="hero-eyebrow">API Security Intelligence</div>
+    <h1>
+      Encontre vulnerabilidades<br>
+      <span class="accent-danger">antes que atacantes</span><br>
+      <span class="line-muted">encontrem você.</span>
+    </h1>
+    <p class="hero-sub">
+      Análise profunda de segurança de API em segundos.<br>
+      IA explica cada risco e como corrigir — sem setup, sem código.
+    </p>
+    <div class="hero-proofs">
+      <span class="proof-item"><span class="proof-check">✓</span> 9 classes de vulnerabilidades</span>
+      <span class="proof-item"><span class="proof-check">✓</span> IA explica como corrigir</span>
+      <span class="proof-item"><span class="proof-check">✓</span> Resultado em segundos</span>
+      <span class="proof-item"><span class="proof-check">✓</span> Sem instalação</span>
+    </div>
+  </div>
+
+  <div class="scanner-card" id="scannerCard">
+    <label class="input-label" for="urlInput">// URL do alvo para análise e JWT Token</label>
+    <div class="input-row">
+      <div class="input-wrapper" style="flex:2;">
+        <span class="input-prefix">↗</span>
+        <input type="url" id="urlInput" class="url-input" placeholder="https://api.suaempresa.com" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="input-wrapper" style="flex:1;">
+        <span class="input-prefix">🔑</span>
+        <input type="text" id="tokenInput" class="url-input" placeholder="Seu JWT Token" autocomplete="off" spellcheck="false">
+      </div>
+      <button class="scan-btn" id="scanBtn" onclick="iniciarScan()">Scan API →</button>
+    </div>
+    <div class="trust-row">
+      <div class="trust-items">
+        <span class="trust-item"><span>⚡</span> ~10 segundos</span>
+        <span class="trust-item"><span>🔒</span> Sem armazenamento</span>
+        <span class="trust-item"><span>🤖</span> Gemini + Groq</span>
+      </div>
+      <span class="free-badge">✦ 3 scans grátis/dia</span>
+    </div>
+  </div>
+
+  <div class="loading-card" id="loadingCard">
+    <div class="loading-radar">
+      <div class="radar-ring"></div><div class="radar-ring"></div><div class="radar-ring"></div>
+      <div class="radar-core"></div>
+    </div>
+    <div class="loading-title" id="loadingTitle">Analisando segurança...</div>
+    <div class="loading-sub" id="loadingSub">Iniciando conexão com o alvo</div>
+    <div class="loading-steps">
+      <div class="step" id="step1"><div class="step-icon">📡</div><span>Conectando</span></div>
+      <div class="step-connector" id="conn1"></div>
+      <div class="step" id="step2"><div class="step-icon">🔍</div><span>Escaneando</span></div>
+      <div class="step-connector" id="conn2"></div>
+      <div class="step" id="step3"><div class="step-icon">🤖</div><span>IA</span></div>
+    </div>
+  </div>
+
+  <div class="error-card" id="errorCard">
+    <div class="error-icon-box">⚠️</div>
+    <div>
+      <div class="error-title">Não foi possível analisar</div>
+      <div class="error-msg" id="errorMsg">Erro desconhecido.</div>
+      <div class="error-retry" onclick="novoScan()">↩ Tentar novamente</div>
+    </div>
+  </div>
+
+  <div class="result-card" id="resultCard">
+    <div class="risk-banner" id="riskBanner">
+      <div class="risk-left">
+        <div class="risk-icon-box" id="riskIconBox">🟢</div>
+        <div>
+          <div class="risk-eyebrow">Nível de risco detectado</div>
+          <div class="risk-value" id="riskValue">—</div>
+          <div class="risk-sub" id="riskSub">—</div>
+        </div>
+      </div>
+      <div class="score-dial">
+        <svg viewBox="0 0 76 76">
+          <circle class="dial-bg" cx="38" cy="38" r="30"/>
+          <circle class="dial-fill" id="dialFill" cx="38" cy="38" r="30" stroke-dasharray="188.5" stroke-dashoffset="188.5" transform="rotate(-90 38 38)"/>
+        </svg>
+        <div class="dial-label">
+          <div class="dial-number" id="dialNumber">—</div>
+          <div class="dial-unit">SCORE</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="high-alert-strip" id="highAlertStrip">
+      <div class="alert-blink"></div>
+      <span><strong style="color:var(--red)">Atenção:</strong> Vulnerabilidades críticas detectadas — sua API pode estar exposta agora. Corrija imediatamente.</span>
+    </div>
+
+    <div class="severity-breakdown">
+      <div class="sev-cell"><div class="sev-count c-high" id="countHigh">0</div><div class="sev-label">High</div><div class="sev-bar-track"><div class="sev-bar-fill h" id="barHigh"></div></div></div>
+      <div class="sev-cell"><div class="sev-count c-medium" id="countMedium">0</div><div class="sev-label">Medium</div><div class="sev-bar-track"><div class="sev-bar-fill m" id="barMedium"></div></div></div>
+      <div class="sev-cell"><div class="sev-count c-low" id="countLow">0</div><div class="sev-label">Low</div><div class="sev-bar-track"><div class="sev-bar-fill l" id="barLow"></div></div></div>
+      <div class="sev-cell"><div class="sev-count c-total" id="countTotal">0</div><div class="sev-label">Total</div><div class="sev-bar-track"><div class="sev-bar-fill" style="background:var(--text-dim)" id="barTotal"></div></div></div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-cell"><div class="stat-num" id="statStatus">—</div><div class="stat-lbl">HTTP Status</div></div>
+      <div class="stat-cell"><div class="stat-num" id="statTime">—</div><div class="stat-lbl">Tempo (ms)</div></div>
+      <div class="stat-cell"><div class="stat-num" id="statHeaders">—</div><div class="stat-lbl">Headers</div></div>
+    </div>
+
+    <div class="result-body">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-icon">🔎</div>
+          <div class="section-title">Vulnerabilidades detectadas</div>
+          <div class="section-count" id="issuesCount">0</div>
+        </div>
+        <div class="issues-list" id="issuesList"></div>
+      </div>
+      <div class="section">
+        <div class="section-header">
+          <div class="section-icon">🤖</div>
+          <div class="section-title">Análise de Inteligência Artificial</div>
+        </div>
+        <div class="ai-provider-chip" id="aiChip"><span class="chip-dot"></span><span id="aiProviderName">—</span></div>
+        <div id="aiContent"></div>
+      </div>
+    </div>
+
+    <div class="result-footer">
+      <div class="footer-meta">
+        <span id="footerTarget">—</span>
+        <span class="footer-sep">|</span>
+        <span id="footerTime">—</span>
+      </div>
+      <button class="new-scan-btn" onclick="novoScan()">+ Novo scan</button>
+    </div>
+  </div>
+
+  <div class="features-strip">
+    <div class="feature"><div class="feature-icon">🛡️</div>9 verificações</div>
+    <div class="feature"><div class="feature-icon">⚡</div>Segundos</div>
+    <div class="feature"><div class="feature-icon">🤖</div>Gemini + Groq</div>
+    <div class="feature"><div class="feature-icon">🔒</div>100% privado</div>
+    <div class="feature"><div class="feature-icon">✦</div>Gratuito</div>
+  </div>
+
+</div>
+
+<script>
+const API_BASE = window.location.hostname === "localhost"
+  ? "http://localhost:3000"
+  : "https://seu-projeto.up.railway.app";
+
+let scanEmAndamento = false;
+
+function esconderTudo() {
+  ["loadingCard","resultCard","errorCard"].forEach(id =>
+    document.getElementById(id).classList.remove("visible"));
+}
+
+function formatarURL(url) {
+  return url.replace(/^https?:\/\//, "").replace(/\/$/, "");
+}
+
+function escapeHtml(str) {
+  return String(str || "")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function setStep(n) {
+  const titles = ["Conectando ao alvo...","Escaneando vulnerabilidades...","Processando com IA..."];
+  const subs   = ["Estabelecendo conexão segura","Analisando headers e configurações","Gerando relatório com Inteligência Artificial"];
+  document.getElementById("loadingTitle").textContent = titles[n-1] || "Analisando...";
+  document.getElementById("loadingSub").textContent   = subs[n-1]   || "";
+  for (let i=1; i<=3; i++) {
+    const s = document.getElementById("step"+i);
+    s.className = "step"+(i<n?" done":i===n?" active":"");
+  }
+  for (let i=1; i<=2; i++) {
+    const c = document.getElementById("conn"+i);
+    if(c) c.className = "step-connector"+(i<n?" active":"");
+  }
+}
+
+function animarDial(score) {
+  const fill = document.getElementById("dialFill");
+  const offset = 188.5 - (score/100)*188.5;
+  setTimeout(() => { fill.style.strokeDashoffset = offset; }, 120);
+}
+
+function renderizarAnaliseIA(texto) {
+  const container = document.getElementById("aiContent");
+  if (!texto) { container.innerHTML = `<div class="ai-raw">Análise não disponível.</div>`; return; }
+
+  const padroes = [
+    { regex:/(?:issue|problema|vulnerabilidade|vulnerability)[:\s\-–]+(.+?)(?=(?:impact|impacto|risco|risk|fix|correção|solution|solução)|$)/gis, label:"🔴 Vulnerabilidade", cls:"issue" },
+    { regex:/(?:impact|impacto|risco|risk)[:\s\-–]+(.+?)(?=(?:fix|correção|solution|solução|issue|problema)|$)/gis,                              label:"⚠️ Impacto",          cls:"impact" },
+    { regex:/(?:fix|correção|solution|solução|remediation|remediação|como corrigir)[:\s\-–]+(.+?)(?=(?:issue|problema|impact|impacto)|$)/gis,     label:"✅ Como corrigir",  cls:"fix" },
+  ];
+
+  let blocos = [];
+  for (const p of padroes) {
+    let m;
+    while ((m = p.regex.exec(texto)) !== null) {
+      blocos.push({ label: p.label, cls: p.cls, conteudo: m[1].trim() });
+    }
+  }
+
+  if (blocos.length >= 2) {
+    container.innerHTML = `<div class="ai-blocks">` +
+      blocos.map(b => `
+        <div class="ai-block">
+          <div class="ai-block-header">
+            <span>${b.label.split(' ')[0]}</span>
+            <span class="ai-block-label ${b.cls}">${b.label.slice(b.label.indexOf(' ')+1)}</span>
+          </div>
+          <div class="ai-block-body">${escapeHtml(b.conteudo)}</div>
+        </div>`).join("") + `</div>`;
+  } else {
+    container.innerHTML = `<div class="ai-raw">${escapeHtml(texto)}</div>`;
+  }
+}
+
+function renderizarResultado(data) {
+  const scan      = data.scan;
+  const analise   = data.analise;
+  const provedor  = data.provedor_ia || data.provider || "ia";
+  const risco     = (scan.nivel_risco || data.risk_level || "MEDIUM").toUpperCase();
+  const score     = scan.score_seguranca ?? 0;
+  const problemas = scan.problemas || [];
+
+  document.getElementById("riskBanner").className = "risk-banner " + risco.toLowerCase();
+
+  const cfg = {
+    LOW:    { icon:"✅", value:"Baixo Risco",  sub:"Nenhuma ameaça crítica detectada." },
+    MEDIUM: { icon:"⚠️", value:"Risco Médio",  sub:"Melhorias de segurança recomendadas." },
+    HIGH:   { icon:"🚨", value:"Alto Risco",   sub:"Vulnerabilidades críticas — ação imediata necessária." },
+  }[risco] || { icon:"⚪", value:"Indefinido", sub:"" };
+
+  document.getElementById("riskIconBox").textContent = cfg.icon;
+  document.getElementById("riskValue").textContent   = cfg.value;
+  document.getElementById("riskSub").textContent     = cfg.sub;
+  document.getElementById("dialNumber").textContent  = score;
+  animarDial(score);
+
+  document.getElementById("highAlertStrip").classList.toggle("visible", risco === "HIGH");
+
+  const high   = problemas.filter(p => p.severidade==="HIGH").length;
+  const medium = problemas.filter(p => p.severidade==="MEDIUM").length;
+  const low    = problemas.filter(p => p.severidade==="LOW").length;
+  const total  = problemas.length;
+  const maxV   = Math.max(high, medium, low, 1);
+
+  document.getElementById("countHigh").textContent   = high;
+  document.getElementById("countMedium").textContent = medium;
+  document.getElementById("countLow").textContent    = low;
+  document.getElementById("countTotal").textContent  = total;
+
+  setTimeout(() => {
+    document.getElementById("barHigh").style.width   = (high/maxV*100)+"%";
+    document.getElementById("barMedium").style.width = (medium/maxV*100)+"%";
+    document.getElementById("barLow").style.width    = (low/maxV*100)+"%";
+    document.getElementById("barTotal").style.width  = (total>0?100:0)+"%";
+  }, 150);
+
+  document.getElementById("statStatus").textContent  = scan.status ?? "—";
+  document.getElementById("statTime").textContent    = scan.tempo_resposta_ms ?? "—";
+  document.getElementById("statHeaders").textContent = scan.headers_recebidos ?? "—";
+  document.getElementById("issuesCount").textContent = total;
+
+  const issuesList = document.getElementById("issuesList");
+  if (total === 0) {
+    issuesList.innerHTML = `
+      <div class="no-issues">
+        <div class="no-issues-icon">✅</div>
+        <div class="no-issues-text">
+          <div class="title">Nenhuma vulnerabilidade detectada</div>
+          <div class="sub">Sua API passou em todas as verificações. Continue monitorando regularmente.</div>
+        </div>
+      </div>`;
+  } else {
+    const ordem = {HIGH:0,MEDIUM:1,LOW:2};
+    const ord = [...problemas].sort((a,b) => (ordem[a.severidade]??3)-(ordem[b.severidade]??3));
+    issuesList.innerHTML = ord.map(p => `
+      <div class="issue-item sev-item-${p.severidade}">
+        <span class="issue-sev-tag tag-${p.severidade}">${p.severidade}</span>
+        <div>
+          <div class="issue-name">${escapeHtml(p.header||p.tipo||"Problema")}</div>
+          <div class="issue-desc">${escapeHtml(p.descricao)}</div>
+        </div>
+      </div>`).join("");
+  }
+
+  const pNome = provedor.charAt(0).toUpperCase()+provedor.slice(1);
+  document.getElementById("aiProviderName").textContent = "Análise via "+pNome;
+  renderizarAnaliseIA(analise);
+
+  document.getElementById("footerTarget").textContent = formatarURL(scan.target||"");
+  document.getElementById("footerTime").textContent = new Date(data.timestamp||Date.now()).toLocaleTimeString("pt-BR");
+
+  esconderTudo();
+  document.getElementById("resultCard").classList.add("visible");
+  setTimeout(() => { document.getElementById("resultCard").scrollIntoView({behavior:"smooth",block:"start"}); }, 120);
+}
+
+function exibirErro(msg) {
+  esconderTudo();
+  document.getElementById("errorMsg").textContent = msg;
+  document.getElementById("errorCard").classList.add("visible");
+}
+
+function novoScan() {
+  esconderTudo();
+  const inp = document.getElementById("urlInput");
+  inp.value = "";
+  inp.classList.remove("error");
+  inp.focus();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+async function iniciarScan() {
+  if (scanEmAndamento) return;
+  const urlInput = document.getElementById("urlInput");
+  const scanBtn  = document.getElementById("scanBtn");
+  const url      = urlInput.value.trim();
+  const token    = document.getElementById("tokenInput").value.trim();
+
+  if (!url) {
+    urlInput.classList.add("error");
+    urlInput.focus();
+    setTimeout(() => urlInput.classList.remove("error"), 800);
+    return;
+  }
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    urlInput.classList.add("error");
+    setTimeout(() => urlInput.classList.remove("error"), 800);
+    exibirErro("A URL deve começar com https:// ou http:// — Ex: https://api.seusite.com");
+    return;
+  }
+  if (!token) {
+    const ti = document.getElementById("tokenInput");
+    ti.classList.add("error");
+    ti.focus();
+    setTimeout(() => ti.classList.remove("error"), 800);
+    exibirErro("Um token JWT é necessário para executar a análise.");
+    return;
+  }
+
+  scanEmAndamento = true;
+  esconderTudo();
+  scanBtn.disabled = true;
+  scanBtn.innerHTML = `<span style="display:inline-block;width:12px;height:12px;border:2px solid rgba(3,5,12,.3);border-top-color:#03050c;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:8px"></span>Escaneando...`;
+  document.getElementById("loadingCard").classList.add("visible");
+  setStep(1);
+
+  try {
+    const t2 = setTimeout(() => setStep(2), 1800);
+    const t3 = setTimeout(() => setStep(3), 4000);
+
+    const resp = await fetch(`${API_BASE}/api/scan`, {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body:JSON.stringify({url}),
+      signal:AbortSignal.timeout(65000),
+    });
+
+    clearTimeout(t2); clearTimeout(t3);
+
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.erro||data.error||`Erro ${resp.status} do servidor`);
+    renderizarResultado(data);
+
+  } catch(e) {
+    if (e.name==="AbortError"||e.name==="TimeoutError") {
+      exibirErro("Timeout: o servidor demorou mais de 60 segundos. Verifique se a URL está acessível.");
+    } else if (e.message.includes("fetch")||e.message.includes("Network")) {
+      exibirErro("Sem conexão com o servidor. Verifique sua internet e tente novamente.");
+    } else {
+      exibirErro(e.message||"Erro inesperado. Tente novamente.");
+    }
+  } finally {
+    scanEmAndamento = false;
+    scanBtn.disabled = false;
+    scanBtn.innerHTML = "Scan API →";
+  }
+}
+
+const ss = document.createElement("style");
+ss.textContent = "@keyframes spin{to{transform:rotate(360deg)}}";
+document.head.appendChild(ss);
+
+document.getElementById("urlInput").addEventListener("keydown", e => { if(e.key==="Enter") iniciarScan(); });
+document.getElementById("urlInput").addEventListener("input",   () => { document.getElementById("urlInput").classList.remove("error"); esconderTudo(); });
+window.addEventListener("load", () => { document.getElementById("urlInput").focus(); });
+</script>
+</body>
+</html>
