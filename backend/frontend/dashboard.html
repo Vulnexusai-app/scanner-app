@@ -216,7 +216,7 @@
     <a class="nav-item active" href="/dashboard.html"><span>📊</span>Dashboard</a>
     <a class="nav-item" href="/pricing.html"><span>💰</span>Preços</a>
     <a class="nav-item" href="/privacy.html"><span>🔒</span>Privacidade</a>
-    <button class="nav-item" onclick="scrollTo(0,document.body.scrollHeight)"><span>📋</span>Histórico</button>
+    <button class="nav-item" onclick="document.getElementById('history-panel').scrollIntoView({behavior:'smooth'})"><span>📋</span>Histórico</button>
   </nav>
   <div class="sidebar-bottom">
     <div class="user-card" id="sidebarUser">
@@ -272,7 +272,7 @@
     <!-- GRID -->
     <div class="grid-2">
       <!-- HISTORY -->
-      <div class="panel">
+      <div class="panel" id="history-panel">
         <div class="panel-hd">
           <div class="panel-title">
             <div class="panel-ic">📋</div>
