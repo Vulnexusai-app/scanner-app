@@ -635,6 +635,19 @@ if(!localStorage.getItem('cookieConsent')){
   banner.innerHTML='Utilizamos cookies para melhorar sua experiência. Ao continuar, você aceita nossa <a href="/privacy.html" style="color:#7c3aed;text-decoration:underline;">Política de Privacidade</a>. <button onclick="localStorage.setItem(\'cookieConsent\',\'true\');document.getElementById(\'cookieConsent\').remove()" style="background:#7c3aed;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:bold;">Aceitar</button>';
   document.body.appendChild(banner);
 }
+
+// ─── URL TOKEN HANDLER (Supabase) ─────────────────────────────
+(function handleHashToken() {
+  const hash = window.location.hash.substring(1);
+  if (!hash) return;
+  const params = new URLSearchParams(hash);
+  const token = params.get('access_token');
+  if (token) {
+    localStorage.setItem('vx_t', token);
+    window.history.replaceState(null, null, window.location.pathname);
+    setTimeout(() => { window.location.reload(); }, 100);
+  }
+})();
 </script>
 
 </body>

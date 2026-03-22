@@ -107,7 +107,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/health", (req, res) => {
-  let pkgVersion = "3.0.0";
+  let pkgVersion = "5.0.0";
   try {
     pkgVersion = require("../package.json").version;
   } catch (e) {}
@@ -122,13 +122,19 @@ app.get("/health", (req, res) => {
 // Sentry Error Handler
 Sentry.setupExpressErrorHandler(app);
 
+// SPA Fallback: Qualquer rota que não comece com /api e não seja arquivo estático retorna index.html
+app.get("*", (req, res, next) => {
+  if (req.path.startsWith("/api")) return next();
+  res.sendFile(path.join(frontendPath, "index.html"));
+});
+
 // Handler Global de Erros
 app.use((err, req, res, next) => {
   log("error", "unhandled_error", "-", `${err.message} | stack: ${err.stack}`);
   res.status(500).json({ erro: "Erro interno do servidor" });
 });
 
-// Catch-all 404 handler for SPA logic and undefined routes
+// Catch-all 404 handler for undefined API routes
 app.use((req, res) => {
   res.status(404).sendFile('404.html', { root: path.join(__dirname, '../frontend') })
 });

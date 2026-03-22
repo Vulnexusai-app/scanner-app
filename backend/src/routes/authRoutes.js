@@ -39,7 +39,13 @@ router.post("/signup", async (req, res) => {
   try {
     const resp = await axios.post(
       `${SUPABASE_URL}/auth/v1/signup`,
-      { email, password: senha },
+      { 
+        email, 
+        password: senha,
+        options: {
+          emailRedirectTo: `${process.env.APP_URL || 'https://vulnexusai.com'}/index.html`
+        }
+      },
       {
         headers: { apikey: SUPABASE_ANON_KEY, "Content-Type": "application/json" },
         timeout: 8000,
