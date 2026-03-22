@@ -101,8 +101,9 @@ app.get('/api/usage', async (req, res) => {
 // Rotas da API
 app.use("/api", routes);
 
-// Rota raiz - Serve o index.html se não for API
-app.get("/", (req, res) => {
+// SPA Fallback: Qualquer rota que não comece com /api e não seja arquivo estático retorna index.html
+app.get("*", (req, res, next) => {
+  if (req.path.startsWith("/api")) return next();
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 

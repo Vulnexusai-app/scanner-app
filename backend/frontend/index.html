@@ -805,6 +805,22 @@ window.addEventListener('load',()=>document.getElementById('urlInput').focus());
   <p style="margin:4px 0 0; font-size:11px;">Use apenas em APIs que você tem autorização para testar.</p>
 </footer>
 <script>
+// ─── URL TOKEN HANDLER (Supabase) ─────────────────────────────
+(function handleHashToken() {
+  const hash = window.location.hash.substring(1);
+  if (!hash) return;
+  const params = new URLSearchParams(hash);
+  const token = params.get('access_token');
+  if (token) {
+    localStorage.setItem('vx_t', token);
+    window.history.replaceState(null, null, window.location.pathname);
+    setTimeout(() => {
+        if (typeof renderHeader === 'function') renderHeader();
+        // Recarrega para garantir que o estado do app está sincronizado
+        window.location.reload();
+    }, 100);
+  }
+})();
 if(!localStorage.getItem('cookieConsent')){
   const banner=document.createElement('div');
   banner.id='cookieConsent';

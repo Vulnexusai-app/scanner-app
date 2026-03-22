@@ -232,7 +232,7 @@
     btn.innerHTML = '<span class="spinner"></span>Salvando...';
 
     try {
-      const r = await fetch(`${API}/api/auth/change-password`, {
+      const r = await fetch(`${API}/api/auth/update-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
         body: JSON.stringify({ senha_atual: atual, senha_nova: nova })
