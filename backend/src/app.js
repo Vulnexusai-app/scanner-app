@@ -101,12 +101,6 @@ app.get('/api/usage', async (req, res) => {
 // Rotas da API
 app.use("/api", routes);
 
-// SPA Fallback: Qualquer rota que não comece com /api e não seja arquivo estático retorna index.html
-app.get("*", (req, res, next) => {
-  if (req.path.startsWith("/api")) return next();
-  res.sendFile(path.join(frontendPath, "index.html"));
-});
-
 app.get("/health", (req, res) => {
   let pkgVersion = "5.0.0";
   try {
@@ -123,7 +117,7 @@ app.get("/health", (req, res) => {
 // Sentry Error Handler
 Sentry.setupExpressErrorHandler(app);
 
-// SPA Fallback: Qualquer rota que não comece com /api e não seja arquivo estático retorna index.html
+// SPA Fallback: Qualquer rota GET que não seja API retorna index.html
 app.get("*", (req, res, next) => {
   if (req.path.startsWith("/api")) return next();
   res.sendFile(path.join(frontendPath, "index.html"));
@@ -137,7 +131,10 @@ app.use((err, req, res, next) => {
 
 // Catch-all 404 handler for undefined API routes
 app.use((req, res) => {
-  res.status(404).sendFile('404.html', { root: path.join(__dirname, '../frontend') })
+  if (req.path.startsWith("/api")) {
+    return res.status(404).json({ erro: "Rota de API não encontrada" });
+  }
+  res.status(404).sendFile('404.html', { root: frontendPath });
 });
 
 app.listen(PORT, () => {
