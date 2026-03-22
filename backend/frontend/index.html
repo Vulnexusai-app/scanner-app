@@ -24,7 +24,7 @@
     html{scroll-behavior:smooth}
     body{
       font-family:var(--font);
-      background: linear-gradient(rgba(5, 10, 20, 0.9), rgba(5, 10, 20, 0.95)), url('/assets/shield-clean.png');
+      background: linear-gradient(rgba(5, 10, 20, 0.9), rgba(5, 10, 20, 0.95)), url('/assets/shield-final.png');
       background-size: cover;
       background-position: center;
       background-attachment: fixed;
@@ -37,7 +37,7 @@
     .background-3d {
       position: fixed;
       inset: 0;
-      background: url('/assets/shield-clean.png') center/cover no-repeat;
+      background: url('/assets/shield-final.png') center/cover no-repeat;
       filter: blur(15px) brightness(0.4);
       z-index: -1;
     }
@@ -45,7 +45,7 @@
     /* BG */
     .bg{position:fixed;inset:0;pointer-events:none;z-index:0}
     /* Shield AI blurred background */
-    .bg-shield{position:absolute;inset:0;background:url('/assets/shield-clean.png') center/cover no-repeat;filter:blur(60px) brightness(0.18) saturate(1.4);z-index:0;transform:scale(1.05)}
+    .bg-shield{position:absolute;inset:0;background:url('/assets/shield-final.png') center/cover no-repeat;filter:blur(60px) brightness(0.18) saturate(1.4);z-index:0;transform:scale(1.05)}
     .bg-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(3,7,18,.7) 0%,rgba(3,7,18,.5) 40%,rgba(3,7,18,.8) 100%);z-index:1}
     .bg-mesh{position:absolute;inset:0;z-index:2;background:radial-gradient(ellipse 120% 60% at 50% -10%,rgba(0,212,255,.05) 0%,transparent 65%),radial-gradient(ellipse 60% 80% at 90% 50%,rgba(0,230,118,.04) 0%,transparent 60%)}
     .bg-grid{position:absolute;inset:0;z-index:3;background-image:linear-gradient(rgba(0,212,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.018) 1px,transparent 1px);background-size:48px 48px}
@@ -286,7 +286,7 @@
 </nav>
 
 <div class="hero">
-  <img src="/assets/shield-clean.png" class="hero-logo" />
+  <img src="/assets/shield-final.png" class="hero-logo" style="mix-blend-mode: screen;" />
   <div class="hero-badge"><div class="badge-dot"></div>Powered by Gemini AI + Groq</div>
   <h1>Segurança de API<br><span class="accent">em segundos.</span></h1>
   <p>Detecte vulnerabilidades críticas, expose headers inseguros e receba correções com IA — antes que atacantes encontrem você.</p>
