@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>404 — Página não encontrada · VulnexusAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --void:#030712;--surface:#0a1128;--green:#00e676;
+      --green-d:rgba(0,230,118,.1);--green-glow:0 0 40px rgba(0,230,118,.3);
+      --text:#f0f4ff;--text-2:#8899bb;--text-3:#3d4f6a;
+      --font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    body{
+      font-family:var(--font);
+      background: radial-gradient(ellipse at 50% 30%, #0a1f3a 0%, #030712 65%);
+      color:var(--text);min-height:100vh;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:24px;text-align:center;-webkit-font-smoothing:antialiased;overflow:hidden;
+    }
+    .glitch{
+      font-size:clamp(6rem,18vw,10rem);font-weight:900;line-height:1;
+      color:var(--green);letter-spacing:-.05em;
+      text-shadow:0 0 40px rgba(0,230,118,.4);
+      position:relative;animation:glitch-shake 3s infinite;
+    }
+    @keyframes glitch-shake{
+      0%,100%{transform:translate(0)}
+      2%{transform:translate(-2px,1px)}
+      4%{transform:translate(2px,-1px)}
+      6%{transform:translate(0)}
+    }
+    .glitch::before,.glitch::after{
+      content:'404';position:absolute;top:0;left:0;width:100%;
+    }
+    .glitch::before{
+      color:#ff3366;clip-path:polygon(0 30%,100% 30%,100% 50%,0 50%);
+      transform:translate(-3px,0);animation:glitch-r 2.5s infinite;
+      text-shadow:none;
+    }
+    .glitch::after{
+      color:#3366ff;clip-path:polygon(0 60%,100% 60%,100% 75%,0 75%);
+      transform:translate(3px,0);animation:glitch-b 2.8s infinite;
+      text-shadow:none;
+    }
+    @keyframes glitch-r{0%,100%{transform:translate(-3px,0)}50%{transform:translate(3px,0)}}
+    @keyframes glitch-b{0%,100%{transform:translate(3px,0)}50%{transform:translate(-3px,0)}}
+    .label{
+      font-family:var(--mono);font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;
+      color:var(--text-3);margin:8px 0 20px;
+    }
+    h1{font-size:clamp(1.3rem,3vw,2rem);font-weight:800;letter-spacing:-.03em;margin-bottom:10px}
+    .desc{font-family:var(--mono);font-size:.82rem;color:var(--text-2);line-height:1.7;max-width:440px;margin-bottom:36px}
+    .actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:48px}
+    .btn{
+      display:inline-flex;align-items:center;gap:8px;padding:11px 24px;
+      font-family:var(--font);font-size:.85rem;font-weight:700;
+      border-radius:50px;text-decoration:none;transition:all .25s;border:none;cursor:pointer;
+    }
+    .btn-primary{background:var(--green);color:#020a05}
+    .btn-primary:hover{background:#1dff90;box-shadow:var(--green-glow);transform:translateY(-2px)}
+    .btn-outline{background:transparent;color:var(--text-2);border:1px solid rgba(255,255,255,0.12)}
+    .btn-outline:hover{color:var(--text);border-color:rgba(255,255,255,0.25);transform:translateY(-2px)}
+    .terminal{
+      font-family:var(--mono);font-size:.72rem;color:var(--text-3);
+      background:rgba(10,17,40,.7);border:1px solid rgba(255,255,255,.06);
+      border-radius:10px;padding:14px 20px;max-width:380px;text-align:left;line-height:1.9;
+    }
+    .terminal .cursor{animation:blink .9s step-end infinite;color:var(--green)}
+    @keyframes blink{50%{opacity:0}}
+    .grid-bg{
+      position:fixed;inset:0;
+      background-image:linear-gradient(rgba(0,230,118,.03) 1px,transparent 1px),
+                       linear-gradient(90deg,rgba(0,230,118,.03) 1px,transparent 1px);
+      background-size:50px 50px;z-index:-1;
+    }
+    #countdown{color:var(--green);font-weight:700}
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+
+  <div class="glitch">404</div>
+  <div class="label">// page_not_found</div>
+  <h1>Ops! Esta rota não existe.</h1>
+  <div class="desc">
+    A URL que você acessou não foi encontrada em nossos servidores.<br>
+    Você será redirecionado para a home em <span id="countdown">5</span>s.
+  </div>
+
+  <div class="actions">
+    <a href="/" class="btn btn-primary">🏠 Voltar à Home</a>
+    <a href="/dashboard.html" class="btn btn-outline">📊 Dashboard</a>
+  </div>
+
+  <div class="terminal">
+    <span style="color:#3d4f6a">$</span> GET <span style="color:#ff4466">/???</span><br>
+    <span style="color:#3d4f6a">←</span> 404 Not Found<br>
+    <span style="color:#3d4f6a">→</span> Redirecionando para <span style="color:var(--green)">/</span><span class="cursor">_</span>
+  </div>
+
+  <script>
+  let c = 5;
+  const el = document.getElementById('countdown');
+  const t = setInterval(() => {
+    c--;
+    if (el) el.textContent = c;
+    if (c <= 0) { clearInterval(t); window.location.href = '/'; }
+  }, 1000);
+  </script>
+</body>
+</html>

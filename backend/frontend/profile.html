@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Meu Perfil — VulnexusAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="/js/toast.js"></script>
+  <style>
+    :root{
+      --void:#030712;--base:#060d1f;--surface:#0a1128;--elevated:#0f1733;--card:#0d1530;
+      --border:rgba(255,255,255,0.07);--border-2:rgba(255,255,255,0.12);
+      --green:#00e676;--green-d:rgba(0,230,118,.12);--green-glow:0 0 40px rgba(0,230,118,.25);
+      --red:#ff4466;--yellow:#ffd600;--blue:#4488ff;
+      --text:#f0f4ff;--text-2:#8899bb;--text-3:#3d4f6a;
+      --font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;
+      --r8:8px;--r12:12px;--r16:16px;--r24:24px;
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    body{
+      font-family:var(--font);
+      background:radial-gradient(ellipse at top, #0d1f3c 0%, #030712 60%);
+      color:var(--text);min-height:100vh;padding:40px 24px;
+      -webkit-font-smoothing:antialiased;
+    }
+    .page{max-width:680px;margin:0 auto}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:36px}
+    .logo-link{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text)}
+    .logo-link .ic{font-size:1.5rem}
+    .logo-link .tx{font-size:1rem;font-weight:800;letter-spacing:-.02em}
+    .logo-link .tx span{color:var(--green)}
+    .back-btn{font-family:var(--mono);font-size:.75rem;color:var(--text-2);text-decoration:none;padding:7px 14px;border:1px solid var(--border);border-radius:var(--r8);transition:all .2s}
+    .back-btn:hover{color:var(--text);border-color:var(--border-2)}
+    h1{font-size:1.7rem;font-weight:900;letter-spacing:-.04em;margin-bottom:6px}
+    h1 span{color:var(--green)}
+    .page-sub{font-family:var(--mono);font-size:.75rem;color:var(--text-2);margin-bottom:32px}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r16);overflow:hidden;margin-bottom:20px}
+    .card-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+    .card-icon{width:32px;height:32px;background:var(--elevated);border:1px solid var(--border);border-radius:var(--r8);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+    .card-title{font-size:.9rem;font-weight:700}
+    .card-body{padding:22px}
+    .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:8px}
+    .stat-box{background:var(--elevated);border:1px solid var(--border);border-radius:var(--r12);padding:16px;text-align:center}
+    .stat-val{font-family:var(--mono);font-size:1.6rem;font-weight:900;margin-bottom:4px;color:var(--green)}
+    .stat-lbl{font-size:.7rem;color:var(--text-2)}
+    .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 12px;border-radius:50px;font-family:var(--mono);font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+    .badge-free{background:rgba(68,136,255,.1);color:var(--blue);border:1px solid rgba(68,136,255,.2)}
+    .badge-pro{background:var(--green-d);color:var(--green);border:1px solid rgba(0,230,118,.2)}
+    .field{margin-bottom:16px}
+    label{display:block;font-family:var(--mono);font-size:.63rem;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px}
+    input{
+      width:100%;background:var(--elevated);border:1px solid var(--border);
+      border-radius:var(--r12);padding:12px 14px;font-family:var(--mono);
+      font-size:.83rem;color:var(--text);outline:none;transition:all .2s;caret-color:var(--green);
+    }
+    input:focus{border-color:rgba(0,230,118,.35);box-shadow:0 0 0 3px rgba(0,230,118,.07)}
+    input::placeholder{color:var(--text-3)}
+    input:disabled{opacity:.5;cursor:not-allowed}
+    .btn{display:inline-flex;align-items:center;gap:6px;font-family:var(--font);font-size:.82rem;font-weight:600;padding:9px 18px;border-radius:var(--r8);border:none;cursor:pointer;transition:all .2s}
+    .btn-primary{background:var(--green);color:#020a05}
+    .btn-primary:hover{background:#1dff90;box-shadow:var(--green-glow)}
+    .btn-primary:disabled{opacity:.5;cursor:not-allowed}
+    .btn-outline{background:transparent;color:var(--text-2);border:1px solid var(--border)}
+    .btn-outline:hover{border-color:var(--border-2);color:var(--text)}
+    .btn-danger{background:transparent;color:var(--red);border:1px solid rgba(255,68,102,.25)}
+    .btn-danger:hover{background:rgba(255,68,102,.08);border-color:rgba(255,68,102,.4)}
+    .footer-actions{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+    .spinner{width:13px;height:13px;border:2px solid rgba(2,10,5,.3);border-top-color:#020a05;border-radius:50%;animation:spin .6s linear infinite;display:inline-block;vertical-align:middle;margin-right:5px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .quota-bar{margin-top:14px}
+    .quota-row{display:flex;justify-content:space-between;margin-bottom:6px}
+    .quota-label{font-family:var(--mono);font-size:.65rem;color:var(--text-3)}
+    .quota-track{height:6px;background:var(--elevated);border-radius:3px;overflow:hidden}
+    .quota-fill{height:100%;background:var(--green);border-radius:3px;transition:width .6s}
+    .upgrade-cta{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,rgba(0,230,118,.07),rgba(68,136,255,.05));border:1px solid rgba(0,230,118,.15);border-radius:var(--r12);padding:16px 20px;margin-top:10px}
+    .upgrade-cta p{font-size:.82rem;color:var(--text-2);line-height:1.5}
+    .upgrade-cta p strong{color:var(--text)}
+    @media(max-width:600px){.stats-row{grid-template-columns:1fr 1fr}.footer-actions{flex-direction:column;gap:10px;align-items:flex-start}}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <a class="logo-link" href="/">
+        <span class="ic">🛡️</span>
+        <span class="tx">Vulnexus<span>AI</span></span>
+      </a>
+      <a class="back-btn" href="/dashboard.html">← Dashboard</a>
+    </header>
+
+    <h1>Meu <span>Perfil</span></h1>
+    <div class="page-sub" id="emailSub">Carregando dados...</div>
+
+    <!-- USAGE STATS -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">📊</div>
+        <div class="card-title">Uso e Cota</div>
+      </div>
+      <div class="card-body">
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="stat-val" id="statHoje">—</div>
+            <div class="stat-lbl">Scans hoje</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val" id="statTotal">—</div>
+            <div class="stat-lbl">Total de scans</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val" id="statRestantes" style="color:var(--blue)">—</div>
+            <div class="stat-lbl">Restantes hoje</div>
+          </div>
+        </div>
+        <div class="quota-bar">
+          <div class="quota-row">
+            <span class="quota-label">Uso diário</span>
+            <span class="quota-label" id="quotaText">0/3</span>
+          </div>
+          <div class="quota-track"><div class="quota-fill" id="quotaFill" style="width:0%"></div></div>
+        </div>
+        <div class="upgrade-cta" id="upgradeCta" style="display:none">
+          <p><strong>Plano Free</strong><br>Limite diário atingido. Faça upgrade para scans ilimitados.</p>
+          <a href="/pricing.html" class="btn btn-primary" style="flex-shrink:0">⚡ Upgrade</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHANGE PASSWORD -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">🔑</div>
+        <div class="card-title">Alterar Senha</div>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label for="senhaAtual">Senha Atual</label>
+          <input type="password" id="senhaAtual" placeholder="••••••••">
+        </div>
+        <div class="field">
+          <label for="senhaNova">Nova Senha</label>
+          <input type="password" id="senhaNova" placeholder="Mín. 6 caracteres">
+        </div>
+        <div class="field">
+          <label for="senhaConfirm">Confirmar Nova Senha</label>
+          <input type="password" id="senhaConfirm" placeholder="Repita a nova senha">
+        </div>
+        <div class="footer-actions">
+          <button class="btn btn-primary" id="btnSenha" onclick="alterarSenha()">Salvar nova senha</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DANGER ZONE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">⚠️</div>
+        <div class="card-title">Sessão</div>
+      </div>
+      <div class="card-body">
+        <div class="footer-actions">
+          <div>
+            <div style="font-size:.82rem;color:var(--text-2);margin-bottom:4px">Plano atual: <span id="planoBadge">—</span></div>
+            <div style="font-family:var(--mono);font-size:.68rem;color:var(--text-3)">Para cancelar assinatura, fale com o suporte.</div>
+          </div>
+          <button class="btn btn-danger" onclick="logout()">Sair da conta</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  const API = "";
+  let token = null, user = null;
+
+  try {
+    token = localStorage.getItem('vx_t');
+    user = JSON.parse(localStorage.getItem('vx_u') || 'null');
+  } catch(e) {}
+
+  if (!token) { window.location.href = '/dashboard.html'; }
+
+  async function carregarUsage() {
+    try {
+      const r = await fetch(`${API}/api/user/usage`, { headers: { Authorization: 'Bearer ' + token } });
+      if (r.status === 401) { logout(); return; }
+      if (!r.ok) return;
+      const d = await r.json();
+      const hoje = d.scans_hoje || 0;
+      const limite = d.limite_diario || 3;
+      const restantes = typeof d.restantes === 'number' ? d.restantes : Math.max(0, limite - hoje);
+      const pct = limite > 0 ? Math.min(100, (hoje / limite) * 100) : 0;
+
+      document.getElementById('statHoje').textContent = hoje;
+      document.getElementById('statRestantes').textContent = restantes;
+      document.getElementById('quotaText').textContent = `${hoje}/${limite}`;
+      document.getElementById('quotaFill').style.width = pct + '%';
+
+      if (restantes <= 0 && d.plano !== 'pro') {
+        document.getElementById('upgradeCta').style.display = 'flex';
+        document.getElementById('quotaFill').style.background = 'var(--red)';
+      }
+
+      const badge = document.getElementById('planoBadge');
+      badge.outerHTML = `<span class="badge ${d.plano === 'pro' ? 'badge-pro' : 'badge-free'}" id="planoBadge">${d.plano || 'free'}</span>`;
+    } catch(e) { console.error(e); }
+  }
+
+  async function carregarScans() {
+    try {
+      const r = await fetch(`${API}/api/scans`, { headers: { Authorization: 'Bearer ' + token } });
+      if (!r.ok) return;
+      const d = await r.json();
+      document.getElementById('statTotal').textContent = (d.scans || []).length;
+    } catch(e) {}
+  }
+
+  async function alterarSenha() {
+    const atual = document.getElementById('senhaAtual').value;
+    const nova = document.getElementById('senhaNova').value;
+    const conf = document.getElementById('senhaConfirm').value;
+    const btn = document.getElementById('btnSenha');
+
+    if (!atual || !nova || !conf) { showToast('Preencha todos os campos.', 'warning'); return; }
+    if (nova.length < 6) { showToast('Nova senha: mínimo 6 caracteres.', 'warning'); return; }
+    if (nova !== conf) { showToast('As senhas não coincidem.', 'error'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Salvando...';
+
+    try {
+      const r = await fetch(`${API}/api/auth/change-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ senha_atual: atual, senha_nova: nova })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.erro || 'Erro ao alterar senha');
+      showToast('Senha alterada com sucesso!', 'success');
+      document.getElementById('senhaAtual').value = '';
+      document.getElementById('senhaNova').value = '';
+      document.getElementById('senhaConfirm').value = '';
+    } catch(e) {
+      showToast(e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Salvar nova senha';
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem('vx_t');
+    localStorage.removeItem('vx_u');
+    window.location.href = '/dashboard.html';
+  }
+
+  // Init
+  if (user) {
+    document.getElementById('emailSub').textContent = user.email || 'Usuário autenticado';
+  }
+  carregarUsage();
+  carregarScans();
+  </script>
+</body>
+</html>

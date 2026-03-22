@@ -4,6 +4,17 @@ const cors = require("cors");
 const config = require("./config");
 const routes = require("./routes");
 const { log } = require("./utils/logger");
+const supabase = require("./services/supabase");
+const Sentry = require("@sentry/node");
+const { nodeProfilingIntegration } = require("@sentry/profiling-node");
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  integrations: [nodeProfilingIntegration()],
+  tracesSampleRate: 0.1,
+  environment: process.env.ENVIRONMENT || "production"
+});
+
 
 const path = require("path");
 const app = express();
@@ -11,10 +22,53 @@ const { PORT } = config;
 
 // Segurança e Middleware
 app.use(helmet({
-  contentSecurityPolicy: false, // Permitir carregar scripts/CSS externos se necessário
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://plausible.io"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https://*.supabase.co", "https://api.groq.com", "https://generativelanguage.googleapis.com"],
+    }
+  },
+  hsts: { maxAge: 31536000, includeSubDomains: true },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
 }));
 app.use(cors());
 app.use(express.json());
+
+const rateLimit = require('express-rate-limit')
+
+// Proteção brute force no login
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5,
+  message: { error: 'Muitas tentativas. Aguarde 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false
+})
+
+// Rate limit geral da API
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minuto
+  max: 30,
+  message: { error: 'Muitas requisições. Aguarde um momento.' },
+  standardHeaders: true,
+  legacyHeaders: false
+})
+
+// Rate limit específico para forgot-password
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hora
+  max: 3,
+  message: { error: 'Limite de emails atingido. Aguarde 1 hora.' }
+})
+
+app.use('/api/', apiLimiter)
+app.use('/api/auth/forgot-password', forgotPasswordLimiter)
+app.use('/api/auth/login', authLimiter)
+app.use('/api/auth/signup', authLimiter)
+
 
 // Logs de Startup
 log("info", "VulnexusAI SaaS Scanner v3.0 booting...");
@@ -22,6 +76,27 @@ log("info", "VulnexusAI SaaS Scanner v3.0 booting...");
 // Servir Frontend (Static Files)
 const frontendPath = path.join(__dirname, "../frontend");
 app.use(express.static(frontendPath));
+
+// Uso da API
+app.get('/api/usage', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1]
+  if (!token) return res.json({ used: 0, limit: 1, plan: 'anonymous' })
+
+  const { data: { user } } = await supabase.auth.getUser(token)
+  if (!user) return res.status(401).json({ error: 'Não autenticado' })
+
+  const today = new Date().toISOString().split('T')[0]
+  const [usageResult, planResult] = await Promise.all([
+    supabase.from('scan_usage').select('scan_count').eq('user_id', user.id).eq('date', today).single(),
+    supabase.from('user_plans').select('scans_per_day, plan').eq('user_id', user.id).single()
+  ])
+
+  res.json({
+    used: usageResult.data?.scan_count ?? 0,
+    limit: planResult.data?.scans_per_day ?? 3,
+    plan: planResult.data?.plan ?? 'free'
+  })
+})
 
 // Rotas da API
 app.use("/api", routes);
@@ -31,12 +106,31 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 
-app.get("/health", (req, res) => res.json({ status: "ok", uptime: process.uptime() }));
+app.get("/health", (req, res) => {
+  let pkgVersion = "3.0.0";
+  try {
+    pkgVersion = require("../package.json").version;
+  } catch (e) {}
+  res.json({
+    status: 'ok',
+    version: pkgVersion,
+    timestamp: new Date().toISOString(),
+    environment: process.env.ENVIRONMENT ?? 'production'
+  })
+});
+
+// Sentry Error Handler
+Sentry.setupExpressErrorHandler(app);
 
 // Handler Global de Erros
 app.use((err, req, res, next) => {
   log("error", "unhandled_error", "-", `${err.message} | stack: ${err.stack}`);
   res.status(500).json({ erro: "Erro interno do servidor" });
+});
+
+// Catch-all 404 handler for SPA logic and undefined routes
+app.use((req, res) => {
+  res.status(404).sendFile('404.html', { root: path.join(__dirname, '../frontend') })
 });
 
 app.listen(PORT, () => {
