@@ -805,22 +805,38 @@ window.addEventListener('load',()=>document.getElementById('urlInput').focus());
   <p style="margin:4px 0 0; font-size:11px;">Use apenas em APIs que você tem autorização para testar.</p>
 </footer>
 <script>
-// ─── URL TOKEN HANDLER (Supabase) ─────────────────────────────
-(function handleHashToken() {
+// ─── URL TOKEN & ACTION HANDLER ─────────────────────────────
+(function handleUrlParams() {
+  // 1. Handle Supabase Hash Tokens
   const hash = window.location.hash.substring(1);
-  if (!hash) return;
-  const params = new URLSearchParams(hash);
-  const token = params.get('access_token');
-  if (token) {
-    localStorage.setItem('vx_t', token);
+  if (hash) {
+    const params = new URLSearchParams(hash);
+    const token = params.get('access_token');
+    if (token) {
+      localStorage.setItem('vx_t', token);
+      window.history.replaceState(null, null, window.location.pathname);
+      setTimeout(() => {
+          if (typeof renderHeader === 'function') renderHeader();
+          window.location.reload();
+      }, 100);
+      return; 
+    }
+  }
+
+  // 2. Handle Action Parameters (e.g. ?signup=true)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('signup') === 'true') {
+    // Limpa a URL e abre o modal
     window.history.replaceState(null, null, window.location.pathname);
     setTimeout(() => {
-        if (typeof renderHeader === 'function') renderHeader();
-        // Recarrega para garantir que o estado do app está sincronizado
-        window.location.reload();
-    }, 100);
+      if (typeof abrirModal === 'function') {
+        abrirModal();
+        if (typeof setAba === 'function') setAba('c');
+      }
+    }, 500);
   }
 })();
+
 if(!localStorage.getItem('cookieConsent')){
   const banner=document.createElement('div');
   banner.id='cookieConsent';
@@ -828,22 +844,6 @@ if(!localStorage.getItem('cookieConsent')){
   banner.innerHTML='Utilizamos cookies para melhorar sua experiência. Ao continuar, você aceita nossa <a href="/privacy.html" style="color:#7c3aed;text-decoration:underline;">Política de Privacidade</a>. <button onclick="localStorage.setItem(\'cookieConsent\',\'true\');document.getElementById(\'cookieConsent\').remove()" style="background:#7c3aed;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:bold;">Aceitar</button>';
   document.body.appendChild(banner);
 }
-
-// ─── URL TOKEN HANDLER (Supabase) ─────────────────────────────
-(function handleHashToken() {
-  const hash = window.location.hash.substring(1);
-  if (!hash) return;
-  const params = new URLSearchParams(hash);
-  const token = params.get('access_token');
-  if (token) {
-    localStorage.setItem('vx_t', token);
-    window.history.replaceState(null, null, window.location.pathname);
-    setTimeout(() => {
-        if (typeof renderHeader === 'function') renderHeader();
-        window.location.reload();
-    }, 100);
-  }
-})();
 </script>
 
 </body>
