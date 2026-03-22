@@ -5,64 +5,59 @@
 const axios = require("axios");
 
 // ─── PROMPT ────────────────────────────────────────────────────────────────────
-function montarPrompt(relatorio) {
+function montarPrompt(scan) {
   const {
-    target, status, tempo_resposta_ms, score_seguranca, nivel_risco,
-    total_problemas, alto_risco, medio_risco, baixo_risco,
-    issues, headers_recebidos, body_snippet, ambiente_teste, ambiente_nota,
-  } = relatorio;
+    target,
+  } = scan;
+  const vulnsRaw = scan.vulnerabilidades || {};
+  const listaVulns = [
+    ...(vulnsRaw.criticas || []).map(v => `[🔴 ALTO/CRÍTICO] ${v.descricao}`),
+    ...(vulnsRaw.moderadas || []).map(v => `[🟡 MÉDIO] ${v.descricao}`),
+    ...(vulnsRaw.baixas || []).map(v => `[🟢 BAIXO] ${v.descricao}`),
+  ].join("\n");
 
-  const listaProblemas = issues && issues.length > 0
-    ? issues.map((i, n) => `${n + 1}. ${i}`).join("\n")
-    : "Nenhum problema encontrado.";
+  return `Você é o **VULNEXUSAI_SECURITY_AUDITOR**, um especialista sênior em segurança ofensiva.
+Analise o relatório técnico abaixo e forneça uma auditoria de nível enterprise.
 
-  const cabecalhosPresentes = (headers_recebidos || []).join(", ") || "Não disponível";
-  const bodyInfo = body_snippet
-    ? `\n=== SNIPPET DO BODY (primeiros 500 chars) ===\n${body_snippet}`
-    : "";
+=== RELATÓRIO TÉCNICO ===
+Target: ${target}
+Score: ${scan.score}/100 | Nível: ${scan.nivel}
+Contexto: ${scan.contexto}
 
-  const aviso_ambiente = ambiente_teste
-    ? "\n⚠️  ATENÇÃO: Esta é uma API de teste/sandbox. Adapte sua análise para contexto educativo/informativo.\n"
-    : "";
+Vulnerabilidades Detectadas:
+${listaVulns}
 
-  return `Você é um especialista sênior em segurança de APIs (OWASP, SANS, NIST). Analise o relatório abaixo e responda EXCLUSIVAMENTE em português do Brasil.${aviso_ambiente}
+Combinações/Correlações Encontrativas:
+${(scan.correlacoes || []).join("\n")}
 
-=== DADOS DO SCAN ===
-URL analisada: ${target}
-Status HTTP: ${status}
-Tempo de resposta: ${tempo_resposta_ms}ms
-Score de segurança: ${score_seguranca}/100
-Nível de risco geral: ${nivel_risco}
-Total de problemas: ${total_problemas} (${alto_risco} HIGH · ${medio_risco} MEDIUM · ${baixo_risco} LOW)
+Headers Recebidos: ${(scan.headers_recebidos || []).join(", ")}
+Body Snippet: ${scan.body_snippet}
 
-=== PROBLEMAS DETECTADOS ===
-${listaProblemas}
-
-=== HEADERS RECEBIDOS ===
-${cabecalhosPresentes}
-${bodyInfo}
-
-=== SUA RESPOSTA DEVE CONTER ===
+=== INSTRUÇÕES DE RESPOSTA (OBRIGATÓRIO) ===
+Responda em PORTUGUÊS (Brasil).
+Sua resposta deve ser dividida exatamente nestas seções:
 
 ## 🎯 Resumo Executivo
-Uma frase clara sobre o estado de segurança desta API.
+Uma análise profissional de 2-3 frases sobre a postura de segurança do alvo e o risco ao negócio.
 
-## 🔴 Riscos Críticos (HIGH)
-Para cada problema HIGH: explique o risco, mostre um exemplo real de ataque, e forneça o código de correção.
+## ⚠️ Plano de Ação Prioritário
+Ordene as vulnerabilidades pelo impacto REAL. Use os ícones exatamente como abaixo:
+🔴 **Corrigir Imediatamente:** (Vulnerabilidades críticas/altas com impacto direto)
+🟡 **Corrigir em Seguida:** (Vulnerabilidades médias e correlações de segurança)
+🟢 **Melhorias Futuras:** (Baixo risco e boas práticas)
 
-## 🟡 Riscos Moderados (MEDIUM)
-Para cada problema MEDIUM: explique brevemente e dê a correção.
+Para cada item, explique:
+- **O que é:** Tecnicamente, o que foi encontrado.
+- **Impacto:** Como um atacante exploraria (ex: PoC conceitual).
+- **Remediação:** Código real ou configuração para corrigir.
 
-## 🟢 Informativo (LOW)
-Liste os pontos LOW resumidamente.
+## 💻 Implementação Consolidada
+Forneça um bloco de código (ex: middleware de segurança ou config de servidor) que resolva os principais problemas de uma vez.
 
-## 🛡️ Plano de Ação
-Top 3 correções prioritárias com código real (Node.js/Express quando aplicável).
+## 📊 Veredito do Auditor
+Dê uma nota final e diga se o endpoint está pronto para produção.
 
-## 📊 Avaliação Final
-Score: ${score_seguranca}/100 — diga se é aceitável para produção ou não.
-
-Seja direto, técnico e use exemplos de código reais. Máximo 800 palavras.`;
+Seja técnico, agressivo na detecção e preciso na correção.`;
 }
 
 // ─── GEMINI ────────────────────────────────────────────────────────────────────

@@ -61,24 +61,23 @@ async function startScan(req, res) {
     const relatorio = await escanear(urlLimpa);
     const { analise, provedor } = await analisarComIA(relatorio, config);
 
-    // Resultado padronizado v2
+    // Resultado padronizado v5 (Extreme)
     const resultado = {
-      // Header do resultado
       url: urlLimpa,
       timestamp: new Date().toISOString(),
-      ambiente_teste: relatorio.ambiente_teste,
-      ambiente_nota: relatorio.ambiente_nota,
-
-      // Score e risco (nível raiz para acesso rápido no frontend)
-      score: relatorio.score_seguranca,
-      nivel_risco: relatorio.nivel_risco,
-
-      // Dados completos do scan
-      scan: relatorio,
-
-      // Análise de IA
-      analise,
+      contexto: relatorio.contexto,
+      score: relatorio.score,
+      nivel: relatorio.nivel,
+      resumo: relatorio.resumo,
+      vulnerabilidades: relatorio.vulnerabilidades,
+      correlacoes: relatorio.correlacoes,
+      analiseIA: analise,
       provedor_ia: provedor,
+      
+      // Retrocompatibilidade básica (se necessário)
+      score_seguranca: relatorio.score,
+      nivel_risco: relatorio.nivel,
+      total_problemas: relatorio.resumo.criticas + relatorio.resumo.moderadas + relatorio.resumo.baixas
     };
 
     // Salvar no banco (fire-and-forget — não bloqueia resposta)
@@ -98,10 +97,10 @@ async function getHistory(req, res) {
     const formatado = historico.map(s => ({
       id: s.id,
       url: s.url,
-      score: s.result?.score ?? s.result?.scan?.score_seguranca,
-      nivel_risco: s.result?.nivel_risco ?? s.result?.scan?.nivel_risco,
-      ambiente_teste: s.result?.ambiente_teste ?? false,
-      total_problemas: s.result?.scan?.total_problemas ?? 0,
+      score: s.result?.score ?? s.result?.score_seguranca,
+      nivel: s.result?.nivel ?? s.result?.nivel_risco,
+      contexto: s.result?.contexto || "Desconhecido",
+      total_problemas: s.result?.resumo?.criticas ? (s.result.resumo.criticas + s.result.resumo.moderadas + s.result.resumo.baixas) : (s.result?.total_problemas || 0),
       data: s.created_at,
     }));
     return res.json({ scans: formatado });
