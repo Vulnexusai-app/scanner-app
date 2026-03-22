@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacidade — VulnexusAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --void:#030712;--base:#060d1f;--surface:#0a1128;--elevated:#0f1733;
+      --border:rgba(255,255,255,0.07);--border-2:rgba(255,255,255,0.12);
+      --green:#00e676;--cyan:#00d4ff;--text:#f0f4ff;--text-2:#8899bb;
+      --font:'Outfit',sans-serif;
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:var(--font);background:#050a14;color:var(--text);line-height:1.6}
+    .background-3d { position: fixed; inset: 0; background: url('/assets/shield-matched.png') center/cover no-repeat; filter: blur(40px) brightness(0.2); z-index: -1; }
+    nav{position:sticky;top:0;z-index:100;background:rgba(3,7,18,.8);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 24px}
+    .nav-inner{max-width:1100px;margin:0 auto;height:60px;display:flex;align-items:center;justify-content:space-between}
+    .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+    .logo-text span{color:var(--green)}
+    .container{max-width:800px;margin:80px auto;padding:0 24px}
+    h1{font-size:2.5rem;margin-bottom:32px}
+    h2{font-size:1.5rem;margin:32px 0 16px;color:var(--cyan)}
+    p{margin-bottom:16px;color:var(--text-2)}
+    hr{border:none;border-top:1px solid var(--border);margin:48px 0}
+    footer{padding:40px;text-align:center;background:rgba(0,0,0,0.3);border-top:1px solid var(--border)}
+    .btn-ghost{color:var(--text-2);text-decoration:none;font-size:.85rem}
+  </style>
+</head>
+<body>
+  <div class="background-3d"></div>
+<nav><div class="nav-inner"><a class="logo" href="/"><div class="logo-text">Vulnexus<span>AI</span></div></a><a href="/" class="btn-ghost">Voltar ao Scanner</a></div></nav>
+
+<div class="container">
+  <h1>Política de Privacidade</h1>
+  <p>Última atualização: Março de 2026</p>
+  <p>Sua privacidade é fundamental para nós. Esta política descreve como o VulnexusAI coleta, usa e protege suas informações.</p>
+
+  <h2>1. Dados Coletados</h2>
+  <p>Coletamos apenas os dados estritamente necessários para o funcionamento do serviço:</p>
+  <ul>
+    <li><strong>Endereço de e-mail:</strong> Para criação de conta e controle de limites de scan.</li>
+    <li><strong>URLs Submetidas:</strong> Para realização das análises de segurança solicitadas.</li>
+    <li><strong>Dados de Scan:</strong> Resultados técnicos e logs de resposta das APIs analisadas.</li>
+  </ul>
+
+  <h2>2. Uso das Informações</h2>
+  <p>As informações são usadas exclusivamente para:</p>
+  <ul>
+    <li>Fornecer os relatórios de segurança e recomendações de IA.</li>
+    <li>Manter o histórico de scans para consulta do usuário.</li>
+    <li>Prevenir abusos e ataques contra nossa infraestrutura.</li>
+  </ul>
+
+  <h2>3. Segurança e Armazenamento</h2>
+  <p>Armazenamos seus dados de forma segura e criptografada. **Não vendemos seus dados a terceiros**. As análises de IA são processadas via provedores de confiança (Gemini/Groq) de forma anônima onde possível.</p>
+
+  <h2>4. Contato</h2>
+  <p>Dúvidas ou solicitações de exclusão de dados: <strong>contato@vulnexusai.com</strong></p>
+</div>
+
+<footer><div class="copy">© 2026 VulnexusAI.</div></footer>
+</body>
+</html>
