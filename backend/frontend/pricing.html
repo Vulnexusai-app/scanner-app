@@ -175,12 +175,14 @@
 async function fazerUpgrade() {
   const token = localStorage.getItem('vx_t')
   if (!token) {
+    // Salva a intenção de checkout e redireciona para login
+    localStorage.setItem('vx_redirect_checkout', 'true')
     window.location.href = '/?signup=true'
     return
   }
 
   const btn = event?.target || document.getElementById('btnUpgrade')
-  const textoOriginal = btn?.textContent || 'Fazer upgrade'
+  const textoOriginal = btn?.textContent || 'Assinar Pro — R$ 47/mês →'
   if (btn) { btn.disabled = true; btn.textContent = 'Aguarde...' }
 
   try {
@@ -203,6 +205,23 @@ async function fazerUpgrade() {
     if (btn) { btn.disabled = false; btn.textContent = textoOriginal }
   }
 }
+
+// Handler para trigger automático do checkout
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search)
+  const token = localStorage.getItem('vx_t')
+
+  if (params.get('action') === 'checkout') {
+    if (token) {
+      // Se logado, inicia o processo
+      fazerUpgrade()
+    } else {
+      // Se não logado, marca para depois e manda para login
+      localStorage.setItem('vx_redirect_checkout', 'true')
+      window.location.href = '/?signup=true'
+    }
+  }
+})
 </script>
 
 <section class="faq-section">
