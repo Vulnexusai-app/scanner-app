@@ -1,0 +1,21 @@
+# Tarefas
+
+- [x] Auditoria Inicial e Planejamento
+    - [x] Revisar `supabase.sql` e `indexes.sql`
+    - [x] Revisar `.env.example`
+    - [x] Verificar implementação de `supabase.js`
+- [x] Verificação e Testes
+    - [x] Iniciar servidor backend
+    - [x] Testar endpoint de cadastro (signup)
+    - [x] Testar endpoint de login
+- [x] Atualização da Infraestrutura e Segurança (Fase 2)
+    - [x] Refinar `supabase.sql` (Políticas RLS e Tabelas)
+    - [x] Criar/Atualizar `indexes.sql` para performance
+    - [x] Corrigir inconsistências no backend (`admin.js`)
+    - [x] Validar middlewares de Admin e Quotas
+    - [x] Atualizar `reset-password.html` (Fluxo completo)
+    - [x] Criar/Estilizar `404.html` (Premium)
+    - [x] Integrar Sistema de Toast Global
+- [ ] Documentação Final [ ]
+    - [ ] Atualizar `.env.example` (se necessário)
+    - [ ] Atualizar `README.md`
