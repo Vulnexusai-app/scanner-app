@@ -15,6 +15,14 @@ CREATE TABLE IF NOT EXISTS public.users (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Garantir que a coluna stripe_customer_id exista se a tabela já foi criada anteriormente
+DO $$ 
+BEGIN 
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='stripe_customer_id' AND table_schema='public') THEN
+    ALTER TABLE public.users ADD COLUMN stripe_customer_id TEXT UNIQUE;
+  END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS public.user_plans (
   user_id       UUID PRIMARY KEY REFERENCES public.users(id) ON DELETE CASCADE,
   plan          TEXT DEFAULT 'free' CHECK (plan IN ('free', 'pro', 'enterprise')),
