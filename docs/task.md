@@ -1,0 +1,33 @@
+# Tarefas
+
+- [x] Auditoria Inicial e Planejamento
+    - [x] Revisar `supabase.sql` e `indexes.sql`
+    - [x] Revisar `.env.example`
+    - [x] Verificar implementação de `supabase.js`
+- [x] Verificação e Testes
+    - [x] Iniciar servidor backend
+    - [x] Testar endpoint de cadastro (signup)
+    - [x] Testar endpoint de login
+- [x] Atualização da Infraestrutura e Segurança (Fase 2)
+    - [x] Refinar `supabase.sql` (Políticas RLS e Tabelas)
+    - [x] Criar/Atualizar `indexes.sql` para performance
+    - [x] Corrigir inconsistências no backend (`admin.js`)
+    - [x] Validar middlewares de Admin e Quotas
+    - [x] Atualizar `reset-password.html` (Fluxo completo)
+    - [x] Criar/Estilizar `404.html` (Premium)
+    - [x] Integrar Sistema de Toast Global
+- [x] **Configuração do Banco de Dados (Supabase)**
+    - [x] Consolidar scripts SQL (`setup_completo_vulnexus.sql`)
+    - [x] Corrigir encoding e sintaxe final
+- [x] **Fase 3: Pagamentos com Stripe**
+    - [x] Instalar dependência `stripe`
+    - [x] Configurar chaves no `config/index.js`
+    - [x] Criar `stripeService.js`
+    - [x] Implementar rotas de billing e webhook
+    - [x] Ajustar `app.js` (Webhooks e Rotas)
+    - [x] Atualizar Schema no Supabase (`stripe_customer_id`)
+    - [x] Integrar lógica de upgrade no Frontend
+- [x] **Documentação Final**
+    - [x] Atualizar `.env.example`
+    - [x] Atualizar `README.md`
+    - [x] Sincronizar pasta `docs/`

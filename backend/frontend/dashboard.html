@@ -344,12 +344,63 @@
             </div>
             <div class="usage-track"><div class="usage-fill" id="planFill" style="width:0%"></div></div>
           </div>
-          <button class="upgrade-btn" onclick="window.location.href='/pricing.html'">⚡ Upgrade para Pro</button>
+          <button class="upgrade-btn" id="btnUpgrade" onclick="fazerUpgrade()">⚡ Upgrade para Pro</button>
+          <button class="upgrade-btn" id="btnPortal" style="display:none; background:var(--elevated); color:var(--text); border:1px solid var(--border-2)" onclick="abrirPortalBilling()">⚙️ Gerenciar Assinatura</button>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+// Redireciona para checkout do Stripe
+async function fazerUpgrade() {
+  const token = localStorage.getItem('vx_t')
+  if (!token) return
+
+  const btn = document.getElementById('btnUpgrade')
+  const textoOriginal = btn.textContent
+  btn.disabled = true; btn.textContent = 'Processando...'
+
+  try {
+    const r = await fetch('/api/billing/create-checkout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      }
+    })
+    const data = await r.json()
+    if (!r.ok) {
+      if (typeof showToast === 'function') showToast(data.erro || 'Erro no checkout', 'error')
+      else alert(data.erro)
+      return
+    }
+    window.location.href = data.url
+  } catch (e) {
+    if (typeof showToast === 'function') showToast('Erro de conexão', 'error')
+  } finally {
+    btn.disabled = false; btn.textContent = textoOriginal
+  }
+}
+
+// Abre portal de billing do Stripe
+async function abrirPortalBilling() {
+  const token = localStorage.getItem('vx_t')
+  if (!token) return
+  try {
+    const r = await fetch('/api/billing/portal', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+    const data = await r.json()
+    if (data.url) window.location.href = data.url
+    else alert(data.erro || 'Erro ao abrir portal')
+  } catch (e) {
+    alert('Erro de conexão.')
+  }
+}
+</script>
 
 <!-- AUTH OVERLAY -->
 <div class="auth-overlay" id="authOverlay">
@@ -492,6 +543,18 @@ async function carregarUsage(){
     }
     const pb=document.getElementById('sidebarPlanBadge');
     if(pb){pb.textContent=d.plano;pb.className='plan-badge '+(d.plano==='pro'?'badge-pro':'badge-free');}
+    
+    // Ajustar botões de billing
+    const btnUpgrade = document.getElementById('btnUpgrade');
+    const btnPortal = document.getElementById('btnPortal');
+    if (d.plano === 'pro') {
+      if (btnUpgrade) btnUpgrade.style.display = 'none';
+      if (btnPortal) btnPortal.style.display = 'block';
+    } else {
+      if (btnUpgrade) btnUpgrade.style.display = 'block';
+      if (btnPortal) btnPortal.style.display = 'none';
+    }
+
     // 5.6 quota block
     const qBtn=document.getElementById('qBtn');
     if(qBtn&&d.plano!=='pro'&&restantes<=0){qBtn.disabled=true;qBtn.textContent='⛔ Limite atingido — Upgrade';qBtn.style.background='rgba(255,68,102,0.15)';qBtn.style.color='var(--red)';qBtn.onclick=function(){window.location.href='/pricing.html';};}
@@ -594,18 +657,55 @@ function inicializar(){
   document.getElementById('authOverlay').classList.add('hidden');
   renderSidebar();
   document.getElementById('topTime').textContent=new Date().toLocaleString('pt-BR');
+  
+  // Detectar retorno do Stripe após pagamento
+  const params = new URLSearchParams(window.location.search)
+  if (params.get('upgrade') === 'success') {
+    if (typeof showToast === 'function') {
+      showToast('🎉 Upgrade para Pro realizado com sucesso!', 'success')
+    }
+    window.history.replaceState({}, '', '/dashboard.html')
+  }
+  if (params.get('upgrade') === 'cancelled') {
+    if (typeof showToast === 'function') {
+      showToast('Checkout cancelado. Você continua no plano Free.', 'info')
+    }
+    window.history.replaceState({}, '', '/dashboard.html')
+  }
+
   carregarUsage();
   carregarHistorico();
 }
 
 // Restaurar sessão
-try{
-  const t=localStorage.getItem('vx_t'),u=localStorage.getItem('vx_u');
-  if(t&&u){token=t;user=JSON.parse(u);}
-}catch(e){}
+(async function() {
+  try {
+    const t = localStorage.getItem('vx_t'), u = localStorage.getItem('vx_u');
+    if (t) {
+      token = t;
+      if (u) {
+        user = JSON.parse(u);
+      } else {
+        const r = await fetch(`${API}/api/user/me`, { headers: { Authorization: `Bearer ${t}` } });
+        if (r.ok) {
+          const d = await r.json();
+          user = d.usuario;
+          localStorage.setItem('vx_u', JSON.stringify(user));
+        } else if (r.status === 401) {
+          logout();
+        }
+      }
+    }
+  } catch (e) {}
 
-if(token&&user) inicializar();
-else { document.getElementById('authOverlay').classList.remove('hidden'); renderSidebar(); }
+  if (token && user) {
+    inicializar();
+  } else {
+    const authOverlay = document.getElementById('authOverlay');
+    if (authOverlay) authOverlay.classList.remove('hidden');
+    renderSidebar();
+  }
+})();
 
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&!document.getElementById('authOverlay').classList.contains('hidden')){
@@ -640,26 +740,7 @@ document.addEventListener('keydown',e=>{
     setTimeout(() => { window.location.reload(); }, 100);
   }
 })();
-if(!localStorage.getItem('cookieConsent')){
-  const banner=document.createElement('div');
-  banner.id='cookieConsent';
-  banner.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#111;color:#fff;padding:16px;text-align:center;z-index:9999;border-top:1px solid #333;display:flex;justify-content:center;align-items:center;gap:16px;flex-wrap:wrap;font-size:14px;';
-  banner.innerHTML='Utilizamos cookies para melhorar sua experiência. Ao continuar, você aceita nossa <a href="/privacy.html" style="color:#7c3aed;text-decoration:underline;">Política de Privacidade</a>. <button onclick="localStorage.setItem(\'cookieConsent\',\'true\');document.getElementById(\'cookieConsent\').remove()" style="background:#7c3aed;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:bold;">Aceitar</button>';
-  document.body.appendChild(banner);
-}
 
-// ─── URL TOKEN HANDLER (Supabase) ─────────────────────────────
-(function handleHashToken() {
-  const hash = window.location.hash.substring(1);
-  if (!hash) return;
-  const params = new URLSearchParams(hash);
-  const token = params.get('access_token');
-  if (token) {
-    localStorage.setItem('vx_t', token);
-    window.history.replaceState(null, null, window.location.pathname);
-    setTimeout(() => { window.location.reload(); }, 100);
-  }
-})();
 </script>
 
 </body>

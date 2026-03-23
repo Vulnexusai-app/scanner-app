@@ -26,7 +26,9 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://plausible.io"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrcAttr: ["'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:", "data:image/png;base64"],
       connectSrc: ["'self'", "https://*.supabase.co", "https://api.groq.com", "https://generativelanguage.googleapis.com"],
     }
@@ -34,7 +36,16 @@ app.use(helmet({
   hsts: { maxAge: 31536000, includeSubDomains: true },
   referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
 }));
-app.use(cors());
+
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'https://vulnexusai.com'
+  ],
+  credentials: true
+}));
+app.use('/api/billing/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
 
 const rateLimit = require('express-rate-limit')

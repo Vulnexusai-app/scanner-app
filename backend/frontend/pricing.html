@@ -166,9 +166,44 @@
       <li class="feat-item">Relatório PDF exportável</li>
       <li class="feat-item">Suporte prioritário</li>
     </ul>
-    <button class="price-btn" onclick="alert('Sistema de pagamentos em implementação. Volte em breve!')">Assinar Pro</button>
+    <button onclick="fazerUpgrade()" id="btnUpgrade" class="price-btn">Assinar Pro — R$ 47/mês →</button>
   </div>
 </div>
+
+<script>
+// Redireciona para checkout do Stripe
+async function fazerUpgrade() {
+  const token = localStorage.getItem('vx_t')
+  if (!token) {
+    window.location.href = '/?signup=true'
+    return
+  }
+
+  const btn = event?.target || document.getElementById('btnUpgrade')
+  const textoOriginal = btn?.textContent || 'Fazer upgrade'
+  if (btn) { btn.disabled = true; btn.textContent = 'Aguarde...' }
+
+  try {
+    const r = await fetch('/api/billing/create-checkout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      }
+    })
+    const data = await r.json()
+    if (!r.ok) {
+      alert(data.erro || 'Erro ao iniciar checkout')
+      return
+    }
+    window.location.href = data.url
+  } catch (e) {
+    alert('Erro de conexão. Tente novamente.')
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = textoOriginal }
+  }
+}
+</script>
 
 <section class="faq-section">
   <h2 class="faq-title">Perguntas Frequentes</h2>
