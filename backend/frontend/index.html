@@ -683,58 +683,125 @@ function renderIA(txt){
   }
 }
 
-function renderResult(data){
-  const sc=data.scan, risco=(sc.nivel_risco||data.risk_level||'MEDIUM').toUpperCase(),
-        score=sc.score_seguranca??0, probs=sc.problemas||[];
-  const hdr=document.getElementById('riskHeader');
-  hdr.className='risk-header '+risco;
-  const cfg={LOW:{icon:'✅',name:'Baixo Risco',sub:'Nenhuma ameaça crítica detectada'},MEDIUM:{icon:'⚠️',name:'Risco Médio',sub:'Remediações de segurança recomendadas'},HIGH:{icon:'🚨',name:'Alto Risco',sub:'Vulnerabilidades críticas — ação imediata'}}[risco]||{icon:'⚪',name:'Indefinido',sub:''};
-  document.getElementById('riskIcon').textContent=cfg.icon;
-  document.getElementById('riskName').textContent=cfg.name;
-  document.getElementById('riskSub').textContent=cfg.sub;
-  document.getElementById('scoreNum').textContent=score;
+function renderResult(data) {
+  // Campos do backend — com fallbacks para compatibilidade
+  const nivel = (data.nivel || data.nivel_risco || 'MEDIUM').toUpperCase();
+  const score = data.score ?? data.score_seguranca ?? 0;
+
+  // Montar lista de vulnerabilidades a partir do objeto agrupado
+  const vulns = data.vulnerabilidades || {};
+  const probs = [
+    ...(vulns.criticas || []).map(v => ({ ...v, severidade: 'HIGH' })),
+    ...(vulns.moderadas || []).map(v => ({ ...v, severidade: 'MEDIUM' })),
+    ...(vulns.baixas    || []).map(v => ({ ...v, severidade: 'LOW' })),
+  ];
+
+  // Nível de risco
+  const hdr = document.getElementById('riskHeader');
+  if (hdr) hdr.className = 'risk-header ' + nivel;
+
+  const cfg = {
+    LOW:      { icon: '✅', name: 'Baixo Risco',  sub: 'Nenhuma ameaça crítica detectada' },
+    MEDIUM:   { icon: '⚠️', name: 'Risco Médio',  sub: 'Remediações de segurança recomendadas' },
+    HIGH:     { icon: '🚨', name: 'Alto Risco',   sub: 'Vulnerabilidades críticas — ação imediata' },
+    CRÍTICO:  { icon: '🚨', name: 'Crítico',      sub: 'Vulnerabilidades críticas — ação imediata' },
+    VULNERÁVEL:{ icon: '⚠️',name: 'Vulnerável',   sub: 'Remediações urgentes necessárias' },
+    ATENÇÃO:  { icon: '⚠️', name: 'Atenção',      sub: 'Melhorias de segurança recomendadas' },
+    BOM:      { icon: '✅', name: 'Bom',           sub: 'Poucos problemas encontrados' },
+    SEGURO:   { icon: '✅', name: 'Seguro',        sub: 'Nenhuma ameaça crítica detectada' },
+  }[nivel] || { icon: '⚪', name: nivel, sub: '' };
+
+  const riskIcon = document.getElementById('riskIcon');
+  const riskName = document.getElementById('riskName');
+  const riskSub  = document.getElementById('riskSub');
+  const scoreNum = document.getElementById('scoreNum');
+  if (riskIcon) riskIcon.textContent = cfg.icon;
+  if (riskName) riskName.textContent = cfg.name;
+  if (riskSub)  riskSub.textContent  = cfg.sub;
+  if (scoreNum) scoreNum.textContent  = score;
   animScore(score);
 
-  const h=probs.filter(p=>p.severidade==='HIGH').length,
-        m=probs.filter(p=>p.severidade==='MEDIUM').length,
-        l=probs.filter(p=>p.severidade==='LOW').length,
-        t=probs.length, mx=Math.max(h,m,l,1);
-  document.getElementById('cH').textContent=h;
-  document.getElementById('cM').textContent=m;
-  document.getElementById('cL').textContent=l;
-  document.getElementById('cT').textContent=t;
-  setTimeout(()=>{
-    document.getElementById('bH').style.width=(h/mx*100)+'%';
-    document.getElementById('bM').style.width=(m/mx*100)+'%';
-    document.getElementById('bL').style.width=(l/mx*100)+'%';
-    document.getElementById('bT').style.width=(t>0?100:0)+'%';
-  },150);
-  document.getElementById('stStatus').textContent=sc.status??'—';
-  document.getElementById('stTime').textContent=sc.tempo_resposta_ms??'—';
-  document.getElementById('stHeaders').textContent=sc.headers_recebidos??'—';
-  document.getElementById('issuesCt').textContent=t;
+  // Contadores
+  const h = probs.filter(p => p.severidade === 'HIGH' || p.severidade === 'CRITICAL').length;
+  const m = probs.filter(p => p.severidade === 'MEDIUM').length;
+  const l = probs.filter(p => p.severidade === 'LOW').length;
+  const t = probs.length;
+  const mx = Math.max(h, m, l, 1);
 
-  const il=document.getElementById('issuesList');
-  if(t===0){
-    il.innerHTML=`<div class="no-issues"><div style="font-size:22px">✅</div><div><div style="font-size:.82rem;font-weight:700;color:var(--green);margin-bottom:3px">Nenhuma vulnerabilidade detectada</div><div style="font-family:var(--mono);font-size:.72rem;color:var(--text-2)">Sua API passou em todas as verificações.</div></div></div>`;
-  }else{
-    const ord={HIGH:0,MEDIUM:1,LOW:2};
-    const sorted=[...probs].sort((a,b)=>(ord[a.severidade]??3)-(ord[b.severidade]??3));
-    il.innerHTML=sorted.map(p=>`<div class="issue-row">
-      <span class="issue-tag t${p.severidade[0]}">${p.severidade}</span>
-      <div><div class="issue-name">${esc(p.header||p.tipo||'Problema')}</div><div class="issue-desc">${esc(p.descricao)}</div></div>
-    </div>`).join('');
+  const cH = document.getElementById('cH');
+  const cM = document.getElementById('cM');
+  const cL = document.getElementById('cL');
+  const cT = document.getElementById('cT');
+  if (cH) cH.textContent = h;
+  if (cM) cM.textContent = m;
+  if (cL) cL.textContent = l;
+  if (cT) cT.textContent = t;
+
+  setTimeout(() => {
+    const bH = document.getElementById('bH');
+    const bM = document.getElementById('bM');
+    const bL = document.getElementById('bL');
+    const bT = document.getElementById('bT');
+    if (bH) bH.style.width = (h / mx * 100) + '%';
+    if (bM) bM.style.width = (m / mx * 100) + '%';
+    if (bL) bL.style.width = (l / mx * 100) + '%';
+    if (bT) bT.style.width = (t > 0 ? 100 : 0) + '%';
+  }, 150);
+
+  // Stats
+  const stStatus  = document.getElementById('stStatus');
+  const stTime    = document.getElementById('stTime');
+  const stHeaders = document.getElementById('stHeaders');
+  if (stStatus)  stStatus.textContent  = data.status ?? '—';
+  if (stTime)    stTime.textContent    = data.tempo_ms ?? '—';
+  if (stHeaders) stHeaders.textContent = data.headers_recebidos?.length ?? '—';
+
+  const issuesCt = document.getElementById('issuesCt');
+  if (issuesCt) issuesCt.textContent = t;
+
+  // Lista de vulnerabilidades
+  const il = document.getElementById('issuesList');
+  if (il) {
+    if (t === 0) {
+      il.innerHTML = `<div class="no-issues">
+        <div style="font-size:22px">✅</div>
+        <div>
+          <div style="font-size:.82rem;font-weight:700;color:var(--green);margin-bottom:3px">Nenhuma vulnerabilidade detectada</div>
+          <div style="font-family:var(--mono);font-size:.72rem;color:var(--text-2)">Sua API passou em todas as verificações.</div>
+        </div>
+      </div>`;
+    } else {
+      const ord = { HIGH: 0, CRITICAL: 0, MEDIUM: 1, LOW: 2 };
+      const sorted = [...probs].sort((a, b) => (ord[a.severidade] ?? 3) - (ord[b.severidade] ?? 3));
+      il.innerHTML = sorted.map(p => `<div class="issue-row">
+        <span class="issue-tag t${(p.severidade || 'L')[0]}">${p.severidade || 'LOW'}</span>
+        <div>
+          <div class="issue-name">${esc(p.header || p.tipo || p.type || 'Problema')}</div>
+          <div class="issue-desc">${esc(p.descricao || p.description || '')}</div>
+        </div>
+      </div>`).join('');
+    }
   }
 
-  const prov=data.provedor_ia||data.provider||'ia';
-  document.getElementById('aiChipName').textContent='Análise via '+prov.charAt(0).toUpperCase()+prov.slice(1);
-  renderIA(data.analise);
-  document.getElementById('ftTarget').textContent=fmtURL(sc.target||'');
-  document.getElementById('ftTime').textContent=new Date(data.timestamp||Date.now()).toLocaleTimeString('pt-BR');
+  // Análise de IA — backend retorna 'analiseIA', não 'analise'
+  const analise = data.analiseIA || data.analise || data.ai_analysis || '';
+  const prov = data.provedor_ia || data.provider || 'ia';
+  const aiChipName = document.getElementById('aiChipName');
+  if (aiChipName) aiChipName.textContent = 'Análise via ' + prov.charAt(0).toUpperCase() + prov.slice(1);
+  renderIA(analise);
+
+  // Footer do resultado
+  const ftTarget = document.getElementById('ftTarget');
+  const ftTime   = document.getElementById('ftTime');
+  if (ftTarget) ftTarget.textContent = fmtURL(data.url || '');
+  if (ftTime)   ftTime.textContent   = new Date(data.timestamp || Date.now()).toLocaleTimeString('pt-BR');
 
   esconder();
-  document.getElementById('resultWrap').classList.add('show');
-  setTimeout(()=>document.getElementById('resultWrap').scrollIntoView({behavior:'smooth',block:'start'}),100);
+  const resultWrap = document.getElementById('resultWrap');
+  if (resultWrap) {
+    resultWrap.classList.add('show');
+    setTimeout(() => resultWrap.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+  }
 }
 
 function mostrarErro(msg){
@@ -840,11 +907,26 @@ window.addEventListener('load',()=>document.getElementById('urlInput').focus());
   }
 })();
 
-if(!localStorage.getItem('cookieConsent')){
-  const banner=document.createElement('div');
-  banner.id='cookieConsent';
-  banner.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#111;color:#fff;padding:16px;text-align:center;z-index:9999;border-top:1px solid #333;display:flex;justify-content:center;align-items:center;gap:16px;flex-wrap:wrap;font-size:14px;';
-  banner.innerHTML='Utilizamos cookies para melhorar sua experiência. Ao continuar, você aceita nossa <a href="/privacy.html" style="color:#7c3aed;text-decoration:underline;">Política de Privacidade</a>. <button onclick="localStorage.setItem(\'cookieConsent\',\'true\');document.getElementById(\'cookieConsent\').remove()" style="background:#7c3aed;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:bold;">Aceitar</button>';
+if (!localStorage.getItem('cookieConsent')) {
+  const banner = document.createElement('div');
+  banner.id = 'cookieConsent';
+  banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#111;color:#fff;padding:16px;text-align:center;z-index:9999;border-top:1px solid #333;display:flex;justify-content:center;align-items:center;gap:16px;flex-wrap:wrap;font-size:14px;';
+
+  const texto = document.createElement('span');
+  texto.innerHTML = 'Utilizamos cookies para melhorar sua experiência. Ao continuar, você aceita nossa <a href="/privacy.html" style="color:#8b5cf6;text-decoration:underline;">Política de Privacidade</a>.';
+
+  const btnAceitar = document.createElement('button');
+  btnAceitar.type = 'button';
+  btnAceitar.textContent = 'Aceitar';
+  btnAceitar.style.cssText = 'background:#8b5cf6;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:bold;';
+  btnAceitar.addEventListener('click', function() {
+    localStorage.setItem('cookieConsent', 'true');
+    const b = document.getElementById('cookieConsent');
+    if (b) b.remove();
+  });
+
+  banner.appendChild(texto);
+  banner.appendChild(btnAceitar);
   document.body.appendChild(banner);
 }
 </script>
