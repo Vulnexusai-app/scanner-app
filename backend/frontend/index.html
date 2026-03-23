@@ -564,6 +564,32 @@ window.onerror = function(msg, src, line, col, err) {
 const API = window.location.origin;
 let token = null, user = null, scanning = false;
 
+// ─── MODAL AUTH ────────────────────────────────────────────────
+function abrirModal() {
+  const overlay = document.getElementById('authOverlay');
+  if (overlay) {
+    overlay.classList.remove('hidden');
+    setTimeout(() => {
+      const emailInput = document.getElementById('lEmail');
+      if (emailInput) emailInput.focus();
+    }, 80);
+  }
+}
+
+function fecharModal() {
+  const overlay = document.getElementById('authOverlay');
+  if (overlay) overlay.classList.add('hidden');
+}
+
+function setAba(a) {
+  ['e', 'c'].forEach(x => {
+    const tab = document.getElementById('tab' + x.toUpperCase());
+    const form = document.getElementById('form' + x.toUpperCase());
+    if (tab) tab.classList.toggle('on', x === a);
+    if (form) form.style.display = x === a ? 'block' : 'none';
+  });
+}
+
 function mostrarErro(id, msg) {
   const el = document.getElementById(id)
   if (el) { el.textContent = msg; el.classList.add('show'); el.style.display = 'block' }
