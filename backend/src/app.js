@@ -6,10 +6,11 @@ const routes = require("./routes");
 const { log } = require("./utils/logger");
 const supabase = require("./services/supabase");
 const Sentry = require("@sentry/node");
+const { nodeProfilingIntegration } = require("@sentry/profiling-node");
 
-// ── Sentry sem profiling (compatível com Alpine/Railway) ──────
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
+  integrations: [nodeProfilingIntegration()],
   tracesSampleRate: 0.1,
   environment: process.env.ENVIRONMENT || "production"
 });
@@ -27,7 +28,7 @@ app.use(helmet({
       scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:"],
+      imgSrc: ["'self'", "data:", "https:"],  // ✅ corrigido: removido "data:image/png;base64" inválido
       connectSrc: ["'self'", "https://*.supabase.co", "https://api.groq.com", "https://generativelanguage.googleapis.com"],
     }
   },
@@ -46,6 +47,9 @@ app.use(cors({
 
 app.use('/api/billing/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
+
+// Necessário para Railway/proxies: corrige ERR_ERL_UNEXPECTED_X_FORWARDED_FOR
+app.set('trust proxy', 1);
 
 const rateLimit = require('express-rate-limit');
 
