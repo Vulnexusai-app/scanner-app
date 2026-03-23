@@ -1,9 +1,28 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const MFAService = require('../services/mfaService');
-const { verifyToken } = require('../middlewares/auth');
+const { verificarToken } = require('../middlewares/auth');
 const { log } = require('../utils/logger');
 const router = express.Router();
+
+// Middleware para extrair usuário do token JWT
+async function verifyToken(req, res, next) {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: 'Não autorizado' });
+  }
+  
+  const token = authHeader.split(" ")[1];
+  
+  try {
+    const user = await verificarToken(token);
+    req.user = user;
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: 'Token inválido ou expirado' });
+  }
+}
 
 const mfaLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutos
