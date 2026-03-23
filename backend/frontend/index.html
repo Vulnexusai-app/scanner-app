@@ -626,11 +626,27 @@ function renderHeader(){
   }
 }
 // Restaurar sessão
-try{
-  const t=localStorage.getItem('vx_t'),u=localStorage.getItem('vx_u');
-  if(t&&u){token=t;user=JSON.parse(u);}
-}catch(e){}
-renderHeader();
+(async function() {
+  try {
+    const t = localStorage.getItem('vx_t'), u = localStorage.getItem('vx_u');
+    if (t) {
+      token = t;
+      if (u) {
+        user = JSON.parse(u);
+      } else {
+        const r = await fetch(`${API}/api/user/me`, { headers: { Authorization: `Bearer ${t}` } });
+        if (r.ok) {
+          const d = await r.json();
+          user = d.usuario;
+          localStorage.setItem('vx_u', JSON.stringify(user));
+        } else if (r.status === 401) {
+          logout();
+        }
+      }
+    }
+  } catch (e) {}
+  renderHeader();
+})();
 
 document.getElementById('authOverlay').addEventListener('click',function(e){if(e.target===this)fecharModal();});
 document.addEventListener('keydown',e=>{

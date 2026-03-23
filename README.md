@@ -71,6 +71,22 @@ GROQ_API_KEY=sua_key
 
 ---
 
+### Passo 2: Criar tabelas no Supabase
+
+1. Acesse seu projeto em supabase.com
+2. Vá em **SQL Editor**
+3. Cole e execute o conteúdo de `backend/database/migrations/supabase.sql`
+
+Tabelas criadas:
+- `users` — perfil e plano do usuário
+- `scans` — histórico de scans
+- `user_plans` — limites por plano
+- `scan_usage` — contador diário de scans
+- `banned_users` — usuários banidos
+- `admin_users` — admins do painel
+
+---
+
 ### ▶️ Rodar
 
 ```bash

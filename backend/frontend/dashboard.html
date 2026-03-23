@@ -599,13 +599,34 @@ function inicializar(){
 }
 
 // Restaurar sessão
-try{
-  const t=localStorage.getItem('vx_t'),u=localStorage.getItem('vx_u');
-  if(t&&u){token=t;user=JSON.parse(u);}
-}catch(e){}
+(async function() {
+  try {
+    const t = localStorage.getItem('vx_t'), u = localStorage.getItem('vx_u');
+    if (t) {
+      token = t;
+      if (u) {
+        user = JSON.parse(u);
+      } else {
+        const r = await fetch(`${API}/api/user/me`, { headers: { Authorization: `Bearer ${t}` } });
+        if (r.ok) {
+          const d = await r.json();
+          user = d.usuario;
+          localStorage.setItem('vx_u', JSON.stringify(user));
+        } else if (r.status === 401) {
+          logout();
+        }
+      }
+    }
+  } catch (e) {}
 
-if(token&&user) inicializar();
-else { document.getElementById('authOverlay').classList.remove('hidden'); renderSidebar(); }
+  if (token && user) {
+    inicializar();
+  } else {
+    const authOverlay = document.getElementById('authOverlay');
+    if (authOverlay) authOverlay.classList.remove('hidden');
+    renderSidebar();
+  }
+})();
 
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&!document.getElementById('authOverlay').classList.contains('hidden')){
@@ -640,26 +661,7 @@ document.addEventListener('keydown',e=>{
     setTimeout(() => { window.location.reload(); }, 100);
   }
 })();
-if(!localStorage.getItem('cookieConsent')){
-  const banner=document.createElement('div');
-  banner.id='cookieConsent';
-  banner.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#111;color:#fff;padding:16px;text-align:center;z-index:9999;border-top:1px solid #333;display:flex;justify-content:center;align-items:center;gap:16px;flex-wrap:wrap;font-size:14px;';
-  banner.innerHTML='Utilizamos cookies para melhorar sua experiência. Ao continuar, você aceita nossa <a href="/privacy.html" style="color:#7c3aed;text-decoration:underline;">Política de Privacidade</a>. <button onclick="localStorage.setItem(\'cookieConsent\',\'true\');document.getElementById(\'cookieConsent\').remove()" style="background:#7c3aed;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:bold;">Aceitar</button>';
-  document.body.appendChild(banner);
-}
 
-// ─── URL TOKEN HANDLER (Supabase) ─────────────────────────────
-(function handleHashToken() {
-  const hash = window.location.hash.substring(1);
-  if (!hash) return;
-  const params = new URLSearchParams(hash);
-  const token = params.get('access_token');
-  if (token) {
-    localStorage.setItem('vx_t', token);
-    window.history.replaceState(null, null, window.location.pathname);
-    setTimeout(() => { window.location.reload(); }, 100);
-  }
-})();
 </script>
 
 </body>
