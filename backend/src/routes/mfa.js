@@ -5,6 +5,7 @@ const { verificarToken } = require('../middlewares/auth');
 const { log } = require('../utils/logger');
 const router = express.Router();
 
+// v2 - Fix: Middleware verifyToken definido localmente para evitar undefined
 // Middleware para extrair usuário do token JWT
 async function verifyToken(req, res, next) {
   const authHeader = req.headers.authorization;
