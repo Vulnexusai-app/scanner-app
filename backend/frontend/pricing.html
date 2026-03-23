@@ -114,6 +114,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://vulnexusai.com/assets/og-image.png">
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase-config.js"></script>
 </head>
 <body>
   <div class="background-3d"></div>
@@ -166,7 +168,7 @@
       <li class="feat-item">Relatório PDF exportável</li>
       <li class="feat-item">Suporte prioritário</li>
     </ul>
-    <button class="price-btn" onclick="alert('Sistema de pagamentos em implementação. Volte em breve!')">Assinar Pro</button>
+    <button class="price-btn" onclick="fazerUpgrade()">Assinar Pro</button>
   </div>
 </div>
 
@@ -202,7 +204,43 @@
 </footer>
 
 <script>
-  // Script minimalista para manter o header síncrono
+  async function fazerUpgrade() {
+    let session = null;
+    try {
+      const { data } = await supabase.auth.getSession();
+      session = data?.session;
+      console.log('SESSION:', session);
+      console.log('TOKEN:', session?.access_token);
+    } catch (err) {
+      console.error('Erro ao obter sessão:', err);
+    }
+
+    if (!session?.access_token) {
+      localStorage.setItem('vx_redirect_checkout', 'true');
+      window.location.href = '/index.html';
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/billing/create-checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token
+        }
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || 'Erro ao iniciar checkout');
+      }
+    } catch (err) {
+      console.error('Erro no checkout:', err);
+      alert('Erro de conexão. Tente novamente.');
+    }
+  }
+
   const token = localStorage.getItem('vx_t');
   const user = JSON.parse(localStorage.getItem('vx_u') || 'null');
   const authDiv = document.getElementById('headerAuth');
