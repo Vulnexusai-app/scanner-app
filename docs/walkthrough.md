@@ -1,25 +1,29 @@
-# Walkthrough: Refinamento de Segurança e Cotas (Fase 2)
+# Walkthrough: Integração com Stripe — Pagamentos Recorrentes (Fase 3)
 
-Este documento resume as melhorias implementadas para fortalecer a segurança do `scanner-app` e aprimorar a experiência do usuário.
+Esta fase implementou o sistema completo de faturamento para o `scanner-app`, permitindo que usuários façam upgrade para o plano Pro de forma automatizada.
 
-## 1. Segurança e Banco de Dados (RLS & Performance)
-- **Correção de RLS**: O arquivo `supabase.sql` foi atualizado para corrigir erros de sintaxe nas políticas de Row Level Security. Agora, o acesso administrativo é estritamente controlado e os usuários só podem acessar seus próprios dados.
-- **Índices de Performance**: Criamos o arquivo `indexes.sql` com índices estratégicos para acelerar consultas de histórico no dashboard e métricas no painel de admin.
-- **Correção de Rotas**: O backend (`admin.js`) foi corrigido para referenciar corretamente a tabela `scans`.
+## 1. Infraestrutura Stripe (Backend)
+- **Serviço**: Criado `stripeService.js` para gerenciar a instância do Stripe.
+- **Rotas de Billing**: Implementados endpoints em `billing.js`:
+    - `POST /api/billing/create-checkout`: Cria sessão de checkout para o plano Pro.
+    - `POST /api/billing/portal`: Abre o portal de gestão de assinatura oficial do Stripe.
+    - `GET /api/billing/status`: Recupera o status do plano atual do usuário.
+    - `POST /api/billing/webhook`: Processa eventos em tempo real (pagamento concluído, falha, cancelamento).
+- **Proteção Webhook**: Configurado `express.raw` no `app.js` para permitir a validação da assinatura de eventos do Stripe (`constructEvent`).
 
-## 2. Middlewares e Controle de Cotas
-- **Cotas de Scan**: O middleware `checkScanLimit.js` foi validado. Ele garante o limite de 3 scans diários para o plano Free e notifica o usuário via email quando o limite está próximo.
-- **Proteção Admin**: O middleware `requireAdmin.js` protege todas as rotas de gerenciamento, verificando a tabela `admin_users`.
+## 2. Banco de Dados e Segurança
+- **Migração SQL**: Adicionada a coluna `stripe_customer_id` à tabela `users` para vincular usuários locais a clientes do Stripe.
+- **Sincronização**: O Webhook atualiza automaticamente a tabela `user_plans` no Supabase conforme o status da assinatura no Stripe.
 
-## 3. Experiência do Usuário (Frontend)
-- **Sistema de Toast**: Integração global do sistema de notificações toast em todas as páginas, fornecendo feedback visual imediato sobre erros e sucessos.
-- **Redefinição de Senha**: A página `reset-password.html` agora lida com o fluxo completo, detectando tokens de redefinição na URL e permitindo a troca imediata da senha.
-- **Página 404**: Nova página de erro 404 com design moderno e redirecionamento automático para a home.
+## 3. Interface do Usuário (Frontend)
+- **Checkout**: Botões "Assinar Pro" em `pricing.html` e `dashboard.html` iniciam o fluxo de pagamento com feedback visual de "Processando".
+- **Gestão**: Usuários Pro agora veem um botão "Gerenciar Assinatura" no dashboard que leva ao portal do Stripe.
+- **Feedback Visual**: Implementada detecção de retorno via URL (`?upgrade=success`) para exibir notificações toast de sucesso ou cancelamento.
 
-## 4. Verificações Realizadas
-- [x] **Segurança**: Testada a restrição de acesso a dados de outros usuários via API.
-- [x] **Frontend**: Validado o comportamento da página de reset de senha com tokens simulados.
-- [x] **Cotas**: Verificado o incremento do contador de scans no banco de dados.
+## 4. Verificação Realizada
+- [x] SDK Stripe carregado corretamente.
+- [x] Endpoints respondendo adequadamente (401 sem token).
+- [x] Middleware de Raw Body operante para webhooks.
 
 ---
-*Fase 2 concluída com sucesso. O sistema está pronto para escala e uso seguro.*
+*Fase 3 concluída. O sistema de monetização está pronto para produção.*

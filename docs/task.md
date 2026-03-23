@@ -16,6 +16,14 @@
     - [x] Atualizar `reset-password.html` (Fluxo completo)
     - [x] Criar/Estilizar `404.html` (Premium)
     - [x] Integrar Sistema de Toast Global
+- [x] **Fase 3: Pagamentos com Stripe**
+    - [x] Instalar dependência `stripe`
+    - [x] Configurar chaves no `config/index.js`
+    - [x] Criar `stripeService.js`
+    - [x] Implementar rotas de billing e webhook
+    - [x] Ajustar `app.js` (Webhooks e Rotas)
+    - [x] Atualizar Schema no Supabase (`stripe_customer_id`)
+    - [x] Integrar lógica de upgrade no Frontend
 - [ ] Documentação Final [ ]
-    - [ ] Atualizar `.env.example` (se necessário)
+    - [ ] Atualizar `.env.example`
     - [ ] Atualizar `README.md`

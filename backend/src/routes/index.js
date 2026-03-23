@@ -5,6 +5,7 @@ const authRoutes = require("./authRoutes");
 const authNew = require("./auth");
 const exportsRoutes = require("./exports");
 const adminRoutes = require("./admin");
+const billingRoutes = require("./billing");
 
 const router = express.Router();
 
@@ -12,6 +13,7 @@ router.use("/auth", authRoutes);
 router.use("/auth", authNew);
 router.use("/scan", scanRoutes);
 router.use("/user", userRoutes);
+router.use("/billing", billingRoutes);
 
 // Phase 2: Exports and Admin
 router.use("/", exportsRoutes);

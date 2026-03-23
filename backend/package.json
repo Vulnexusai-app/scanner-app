@@ -18,7 +18,8 @@
     "express-rate-limit": "^7.5.1",
     "helmet": "^8.1.0",
     "pdfkit": "^0.18.0",
-    "resend": "^6.9.4"
+    "resend": "^6.9.4",
+    "stripe": "^20.4.1"
   },
   "engines": {
     "node": ">=18.0.0"
