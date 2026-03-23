@@ -16,7 +16,7 @@ router.get('/metrics', async (req, res) => {
   ] = await Promise.all([
     supabase.from('users').select('id', { count: 'exact', head: true }), // note: requires special view or auth.users access via RPC
     supabase.from('scan_usage').select('scan_count', { count: 'exact', head: true }).eq('date', today),
-    supabase.from('historico_scans').select('id', { count: 'exact', head: true }),
+    supabase.from('scans').select('id', { count: 'exact', head: true }),
     supabase.from('user_plans').select('plan')
   ])
 
