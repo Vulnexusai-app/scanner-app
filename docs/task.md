@@ -16,6 +16,9 @@
     - [x] Atualizar `reset-password.html` (Fluxo completo)
     - [x] Criar/Estilizar `404.html` (Premium)
     - [x] Integrar Sistema de Toast Global
+- [x] **Configuração do Banco de Dados (Supabase)**
+    - [x] Consolidar scripts SQL (`setup_completo_vulnexus.sql`)
+    - [x] Corrigir encoding e sintaxe final
 - [x] **Fase 3: Pagamentos com Stripe**
     - [x] Instalar dependência `stripe`
     - [x] Configurar chaves no `config/index.js`
