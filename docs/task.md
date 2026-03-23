@@ -27,6 +27,7 @@
     - [x] Ajustar `app.js` (Webhooks e Rotas)
     - [x] Atualizar Schema no Supabase (`stripe_customer_id`)
     - [x] Integrar lógica de upgrade no Frontend
-- [ ] Documentação Final [ ]
-    - [ ] Atualizar `.env.example`
-    - [ ] Atualizar `README.md`
+- [x] **Documentação Final**
+    - [x] Atualizar `.env.example`
+    - [x] Atualizar `README.md`
+    - [x] Sincronizar pasta `docs/`
