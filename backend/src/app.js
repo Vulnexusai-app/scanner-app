@@ -15,7 +15,6 @@ Sentry.init({
   environment: process.env.ENVIRONMENT || "production"
 });
 
-
 const path = require("path");
 const app = express();
 const { PORT } = config;
@@ -29,7 +28,7 @@ app.use(helmet({
       scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:", "data:image/png;base64"],
+      imgSrc: ["'self'", "data:", "https:"],  // ✅ corrigido: removido "data:image/png;base64" inválido
       connectSrc: ["'self'", "https://*.supabase.co", "https://api.groq.com", "https://generativelanguage.googleapis.com"],
     }
   },
@@ -45,41 +44,41 @@ app.use(cors({
   ],
   credentials: true
 }));
+
 app.use('/api/billing/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
 
-const rateLimit = require('express-rate-limit')
+const rateLimit = require('express-rate-limit');
 
 // Proteção brute force no login
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
+  windowMs: 15 * 60 * 1000,
   max: 5,
   message: { error: 'Muitas tentativas. Aguarde 15 minutos.' },
   standardHeaders: true,
   legacyHeaders: false
-})
+});
 
 // Rate limit geral da API
 const apiLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minuto
+  windowMs: 60 * 1000,
   max: 30,
   message: { error: 'Muitas requisições. Aguarde um momento.' },
   standardHeaders: true,
   legacyHeaders: false
-})
+});
 
 // Rate limit específico para forgot-password
 const forgotPasswordLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hora
+  windowMs: 60 * 60 * 1000,
   max: 3,
   message: { error: 'Limite de emails atingido. Aguarde 1 hora.' }
-})
+});
 
-app.use('/api/', apiLimiter)
-app.use('/api/auth/forgot-password', forgotPasswordLimiter)
-app.use('/api/auth/login', authLimiter)
-app.use('/api/auth/signup', authLimiter)
-
+app.use('/api/', apiLimiter);
+app.use('/api/auth/forgot-password', forgotPasswordLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/signup', authLimiter);
 
 // Logs de Startup
 log("info", "VulnexusAI SaaS Scanner v3.0 booting...");
@@ -90,24 +89,24 @@ app.use(express.static(frontendPath));
 
 // Uso da API
 app.get('/api/usage', async (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1]
-  if (!token) return res.json({ used: 0, limit: 1, plan: 'anonymous' })
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.json({ used: 0, limit: 1, plan: 'anonymous' });
 
-  const { data: { user } } = await supabase.auth.getUser(token)
-  if (!user) return res.status(401).json({ error: 'Não autenticado' })
+  const { data: { user } } = await supabase.auth.getUser(token);
+  if (!user) return res.status(401).json({ error: 'Não autenticado' });
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = new Date().toISOString().split('T')[0];
   const [usageResult, planResult] = await Promise.all([
     supabase.from('scan_usage').select('scan_count').eq('user_id', user.id).eq('date', today).single(),
     supabase.from('user_plans').select('scans_per_day, plan').eq('user_id', user.id).single()
-  ])
+  ]);
 
   res.json({
     used: usageResult.data?.scan_count ?? 0,
     limit: planResult.data?.scans_per_day ?? 3,
     plan: planResult.data?.plan ?? 'free'
-  })
-})
+  });
+});
 
 // Rotas da API
 app.use("/api", routes);
@@ -122,13 +121,13 @@ app.get("/health", (req, res) => {
     version: pkgVersion,
     timestamp: new Date().toISOString(),
     environment: process.env.ENVIRONMENT ?? 'production'
-  })
+  });
 });
 
-// Sentry Error Handler (Deve vir após as rotas mas ANTES do fallback/404 se quisermos logar erros de roteamento)
+// Sentry Error Handler
 Sentry.setupExpressErrorHandler(app);
 
-// SPA Fallback: Qualquer rota GET que não seja arquivo estático e não seja API retorna index.html
+// SPA Fallback
 app.get("*", (req, res, next) => {
   if (req.path.startsWith("/api")) return next();
   res.sendFile(path.join(frontendPath, "index.html"));
@@ -140,7 +139,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ erro: "Erro interno do servidor" });
 });
 
-// Catch-all 404 handler para rotas de API não definidas ou outros métodos
+// 404 para rotas não encontradas
 app.use((req, res) => {
   if (req.path.startsWith("/api")) {
     return res.status(404).json({ erro: "Rota de API não encontrada" });
@@ -149,7 +148,7 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-    log("info", `Servidor rodando na porta ${PORT}`);
+  log("info", `Servidor rodando na porta ${PORT}`);
 });
 
 module.exports = app;
