@@ -528,7 +528,16 @@
     <div id="formC" style="display:none">
       <div class="auth-field"><label class="auth-lbl">Email</label><input type="email" id="cEmail" class="auth-input" placeholder="seu@email.com"></div>
       <div class="auth-field"><label class="auth-lbl">Senha</label><input type="password" id="cSenha" class="auth-input" placeholder="Mín. 6 caracteres"></div>
-      <button class="auth-submit" id="btnC" onclick="cadastro()">Criar conta grátis</button>
+      
+      <div style="margin-bottom:14px; display:flex; align-items:flex-start; gap:10px">
+        <input type="checkbox" id="aceitarTermos" style="margin-top:2px; cursor:pointer">
+        <label for="aceitarTermos" style="font-size:.75rem; color:var(--text-3); cursor:pointer">
+          Aceito os <a href="/terms.html" target="_blank" style="color:var(--cyan); text-decoration:none">termos</a> e a 
+          <a href="/privacy.html" target="_blank" style="color:var(--cyan); text-decoration:none">política de privacidade</a>
+        </label>
+      </div>
+
+      <button class="auth-submit" id="btnC" type="button" onclick="cadastro()">Criar conta grátis</button>
       <div class="auth-err" id="errC"></div>
     </div>
     <div class="auth-note">Sem cartão de crédito necessário</div>
@@ -552,53 +561,148 @@
 const API = window.location.origin;
 let token = null, user = null, scanning = false;
 
-// ─── AUTH ──────────────────────────────────────────────────────
-function abrirModal(){ document.getElementById('authOverlay').classList.remove('hidden'); setTimeout(()=>document.getElementById('lEmail').focus(),80); }
-function fecharModal(){ document.getElementById('authOverlay').classList.add('hidden'); }
-function setAba(a){
-  ['e','c'].forEach(x=>{
-    document.getElementById('tab'+x.toUpperCase()).classList.toggle('on',x===a);
-    document.getElementById('form'+x.toUpperCase()).style.display=x===a?'block':'none';
-  });
+function mostrarErro(id, msg) {
+  const el = document.getElementById(id)
+  if (el) { el.textContent = msg; el.classList.add('show'); el.style.display = 'block' }
 }
 
-async function login(){
-  const email=document.getElementById('lEmail').value.trim(), senha=document.getElementById('lSenha').value;
-  const err=document.getElementById('errE'), btn=document.getElementById('btnE');
-  err.classList.remove('show');
-  if(!email||!senha){err.textContent='Preencha email e senha.';err.classList.add('show');return;}
-  btn.disabled=true;btn.textContent='Entrando...';
-  try{
-    const r=await fetch(`${API}/api/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,senha})});
-    const d=await r.json();
-    if(!r.ok) throw new Error(d.erro||'Credenciais inválidas');
-    salvarSessao(d.access_token,d.user); fecharModal();
-  }catch(e){err.textContent=e.message;err.classList.add('show');}
-  finally{btn.disabled=false;btn.textContent='Entrar';}
+function esconderErro(id) {
+  const el = document.getElementById(id)
+  if (el) { el.classList.remove('show'); el.style.display = 'none' }
 }
 
-async function cadastro(){
-  const email=document.getElementById('cEmail').value.trim(), senha=document.getElementById('cSenha').value;
-  const err=document.getElementById('errC'), btn=document.getElementById('btnC');
-  err.classList.remove('show');
-  if(!email||!senha){err.textContent='Preencha email e senha.';err.classList.add('show');return;}
-  if(senha.length<6){err.textContent='Senha: mín. 6 caracteres.';err.classList.add('show');return;}
-  btn.disabled=true;btn.textContent='Criando conta...';
-  try{
-    const r=await fetch(`${API}/api/auth/signup`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,senha})});
-    const d=await r.json();
-    if(!r.ok) throw new Error(d.erro||'Erro ao criar conta');
-    if(d.access_token){salvarSessao(d.access_token,d.user);fecharModal();}
-    else{err.style.color='var(--green)';err.textContent='✓ Conta criada! Verifique seu email.';err.classList.add('show');}
-  }catch(e){err.textContent=e.message;err.classList.add('show');}
-  finally{btn.disabled=false;btn.textContent='Criar conta grátis';}
+function salvarSessao(t, u) {
+  token = t
+  user = u
+  localStorage.setItem('vx_t', t)
+  localStorage.setItem('vx_u', JSON.stringify(u))
 }
 
-function salvarSessao(t,u){
-  token=t; user=u;
-  localStorage.setItem('vx_t',t);
-  localStorage.setItem('vx_u',JSON.stringify(u));
-  renderHeader();
+function atualizarUI() {
+  const dashLink = document.getElementById('dashLink')
+  if (dashLink) dashLink.style.display = 'inline-flex'
+  const dbBtn = document.getElementById('dbBtnFooter')
+  if (dbBtn) dbBtn.style.display = 'inline-flex'
+  const userInfo = document.getElementById('userInfo')
+  if (userInfo && user) {
+    userInfo.textContent = user.email
+    userInfo.style.display = 'inline-flex'
+  }
+  const btnAbrirModal = document.getElementById('btnAbrirModal')
+  if (btnAbrirModal) btnAbrirModal.style.display = 'none'
+}
+
+function restaurarSessao() {
+  const t = localStorage.getItem('vx_t')
+  const u = localStorage.getItem('vx_u')
+  if (t && u) {
+    try {
+      token = t
+      user = JSON.parse(u)
+      atualizarUI()
+    } catch(e) {
+      localStorage.removeItem('vx_t')
+      localStorage.removeItem('vx_u')
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', restaurarSessao)
+
+async function login() {
+  const email = document.getElementById('lEmail')?.value?.trim()
+  const senha = document.getElementById('lSenha')?.value
+  
+  if (!email || !senha) {
+    mostrarErro('errE', 'Preencha email e senha')
+    return
+  }
+
+  const btn = document.getElementById('btnE')
+  if (btn) { btn.disabled = true; btn.textContent = 'Entrando...' }
+  esconderErro('errE')
+
+  try {
+    const r = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, senha })
+    })
+    const d = await r.json()
+
+    if (!r.ok) {
+      mostrarErro('errE', d.erro || 'Email ou senha incorretos')
+      return
+    }
+
+    salvarSessao(d.access_token, d.user)
+    fecharModal()
+    atualizarUI()
+
+    if (typeof showToast === 'function') showToast('Login realizado!', 'success')
+
+  } catch (e) {
+    mostrarErro('errE', 'Erro de conexão com o servidor')
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Entrar' }
+  }
+}
+
+async function cadastro() {
+  const checkbox = document.getElementById('aceitarTermos')
+  if (checkbox && !checkbox.checked) {
+    mostrarErro('errC', 'Você precisa aceitar os termos para continuar')
+    return
+  }
+
+  const email = document.getElementById('cEmail')?.value?.trim()
+  const senha = document.getElementById('cSenha')?.value
+
+  if (!email || !senha) {
+    mostrarErro('errC', 'Preencha email e senha')
+    return
+  }
+  if (senha.length < 6) {
+    mostrarErro('errC', 'Senha deve ter ao menos 6 caracteres')
+    return
+  }
+
+  const btn = document.getElementById('btnC')
+  if (btn) { btn.disabled = true; btn.textContent = 'Criando conta...' }
+  esconderErro('errC')
+
+  try {
+    const r = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, senha })
+    })
+    const d = await r.json()
+
+    if (!r.ok) {
+      mostrarErro('errC', d.erro || 'Erro ao criar conta')
+      return
+    }
+
+    if (d.access_token) {
+      salvarSessao(d.access_token, d.user)
+      fecharModal()
+      atualizarUI()
+      if (typeof showToast === 'function') showToast('Conta criada com sucesso!', 'success')
+    } else {
+      fecharModal()
+      if (typeof showToast === 'function') {
+        showToast('Conta criada! Verifique seu email para confirmar.', 'info')
+      } else {
+        alert('Conta criada! Verifique seu email para confirmar antes de entrar.')
+      }
+    }
+
+  } catch (e) {
+    mostrarErro('errC', 'Erro de conexão com o servidor')
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Criar conta grátis' }
+  }
 }
 function logout(){
   token=null;user=null;
