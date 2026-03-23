@@ -157,7 +157,7 @@
   <div class="price-card featured">
     <div class="badge-pop">Mais popular</div>
     <div class="plan-name">Plano Pro</div>
-    <div class="price">R$ 47<span>/mês</span></div>
+    <div class="price">R$ 197<span>/mês</span></div>
     <ul class="features-list">
       <li class="feat-item">Scans ilimitados</li>
       <li class="feat-item">20+ verificações de segurança</li>
@@ -166,7 +166,7 @@
       <li class="feat-item">Relatório PDF exportável</li>
       <li class="feat-item">Suporte prioritário</li>
     </ul>
-    <button onclick="fazerUpgrade()" id="btnUpgrade" class="price-btn">Assinar Pro — R$ 47/mês →</button>
+    <button onclick="fazerUpgrade()" id="btnUpgrade" class="price-btn">Assinar Pro — R$ 197/mês →</button>
   </div>
 </div>
 
@@ -182,7 +182,7 @@ async function fazerUpgrade() {
   }
 
   const btn = event?.target || document.getElementById('btnUpgrade')
-  const textoOriginal = btn?.textContent || 'Assinar Pro — R$ 47/mês →'
+  const textoOriginal = btn?.textContent || 'Assinar Pro — R$ 197/mês →'
   if (btn) { btn.disabled = true; btn.textContent = 'Aguarde...' }
 
   try {

@@ -36,6 +36,8 @@ router.post("/signup", async (req, res) => {
   if (!email || !senha) return res.status(400).json({ erro: "Email e senha são obrigatórios" });
   if (senha.length < 6) return res.status(400).json({ erro: "Senha deve ter ao menos 6 caracteres" });
   try {
+    console.log("Tentando signup para:", email);
+    console.log("URL Supabase:", SUPABASE_URL);
     const resp = await axios.post(
       `${SUPABASE_URL}/auth/v1/signup`,
       { 
@@ -57,6 +59,7 @@ router.post("/signup", async (req, res) => {
     // E-mail de confirmação pendente
     return res.json({ message: "Verifique seu email para confirmar a conta", user: { email } });
   } catch (err) {
+    console.error("Erro no signup Supabase:", err.response?.data || err.message);
     const msg = err.response?.data?.msg || err.response?.data?.error_description || "Erro ao criar conta";
     return res.status(400).json({ erro: msg });
   }
