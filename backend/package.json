@@ -1,6 +1,6 @@
 {
   "name": "vulnexusai-saas-scanner",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "SaaS Scanner de vulnerabilidades — produção hardened",
   "main": "src/app.js",
   "scripts": {
@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@sentry/node": "^10.45.0",
+    "@sentry/profiling-node": "^10.45.0",
     "@supabase/supabase-js": "^2.99.3",
     "axios": "^1.13.6",
     "cors": "^2.8.6",
