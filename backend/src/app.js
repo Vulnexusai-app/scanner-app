@@ -5,15 +5,25 @@ const config = require("./config");
 const routes = require("./routes");
 const { log } = require("./utils/logger");
 const supabase = require("./services/supabase");
-const Sentry = require("@sentry/node");
-const { nodeProfilingIntegration } = require("@sentry/profiling-node");
 
-Sentry.init({
-  dsn: process.env.SENTRY_DSN,
-  integrations: [nodeProfilingIntegration()],
-  tracesSampleRate: 0.1,
-  environment: process.env.ENVIRONMENT || "production"
-});
+// Sentry - opcional
+let Sentry;
+try {
+  Sentry = require("@sentry/node");
+  const { nodeProfilingIntegration } = require("@sentry/profiling-node");
+  
+  if (process.env.SENTRY_DSN) {
+    Sentry.init({
+      dsn: process.env.SENTRY_DSN,
+      integrations: [nodeProfilingIntegration()],
+      tracesSampleRate: 0.1,
+      environment: process.env.ENVIRONMENT || "production"
+    });
+    log("info", "Sentry inicializado");
+  }
+} catch (err) {
+  log("warn", "Sentry não disponível", err.message);
+}
 
 const path = require("path");
 const app = express();
