@@ -6,3 +6,7 @@ node_modules/
 coverage/
 dist/
 build/
+*.log
+backend/debug_*.js
+backend/test_*.js
+backend/signup_test.json
