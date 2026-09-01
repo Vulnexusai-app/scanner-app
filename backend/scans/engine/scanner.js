@@ -168,8 +168,6 @@ async function escanear(url) {
   const ambienteTeste = isAmbienteTeste(url);
   const baseUrl = getBaseUrl(url);
 
-  console.log(`[Elite Scanner] Alvo: ${url} | Ambiente: ${ambienteTeste ? 'TESTE' : 'REAL'}`);
-
   // 1. Requisição Principal
   let resposta;
   try {
