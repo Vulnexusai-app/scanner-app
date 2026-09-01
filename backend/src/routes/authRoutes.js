@@ -3,10 +3,17 @@ const axios = require("axios");
 const config = require("../config");
 
 const router = express.Router();
-const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = config;
+const { SUPABASE_URL, SUPABASE_ANON_KEY } = config;
 
-// Chave anon separada para operações de auth em nome do usuário
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || SUPABASE_SERVICE_ROLE_KEY;
+// A chave anon é obrigatória para operações de auth em nome do usuário.
+// NUNCA fazemos fallback para a SERVICE_ROLE_KEY (privilégio maior): se a
+// chave anon não estiver setada, falhamos explicitamente no boot.
+if (!SUPABASE_ANON_KEY) {
+  throw new Error(
+    "SUPABASE_ANON_KEY não configurada. Recusando boot: operações de auth "
+    + "exigem a chave anon e não devem usar a SERVICE_ROLE_KEY como substituta."
+  );
+}
 
 // POST /api/auth/login
 router.post("/login", async (req, res) => {
