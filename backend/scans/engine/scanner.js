@@ -3,6 +3,9 @@
  * Segurança Ofensiva & Defensiva de Elite — Modularizado
  */
 const axios = require("axios");
+const http = require("node:http");
+const https = require("node:https");
+const { validarHostPublico, isIPProibido, SSRFError } = require("../../src/utils/ssrf");
 
 // ─── IMPORTAÇÃO DOS MÓDULOS ───────────────────────────────────────────────────
 // Módulos Extraídos
@@ -62,17 +65,91 @@ function calcularScoreEnterprise(vulns, status, url, ambienteTeste) {
 }
 
 // ─── REQUISIÇÕES ──────────────────────────────────────────────────────────────
-async function request(url, timeout = 7000, method = "GET", data = null) {
-  const config = {
-    method,
-    url,
-    timeout,
-    validateStatus: () => true,
-    headers: { "User-Agent": "VulnexusAI-Extreme/5.0", "Accept": "*/*" },
-    maxRedirects: 3
+const REDIRECT_STATUS = new Set([301, 302, 303, 307, 308]);
+const MAX_REDIRECTS = 3;
+
+/**
+ * Cria um agente HTTP/HTTPS com um `lookup` customizado que revalida o DNS
+ * na hora da conexão e NUNCA conecta a um IP privado/loopback/link-local
+ * (proteção contra DNS rebinding). Lança SSRFError se resolver para interno.
+ */
+function criarAgenteSeguro() {
+  const lookupSeguro = async (hostname, options, callback) => {
+    try {
+      const lista = await require("node:dns/promises").lookup(hostname, { all: true, verbatim: true });
+      const enderecos = Array.isArray(lista) ? lista : [];
+      // Revalida cada IP no momento da conexão (novo resolve: cobre rebinding).
+      for (const item of enderecos) {
+        if (isIPProibido(item.address)) {
+          return callback(new SSRFError(`Resolução para IP interno (${item.address}) bloqueada (SSRF)`));
+        }
+      }
+      if (options && options.all) return callback(null, enderecos);
+      const escolhido = enderecos.find(i => i.family === 4) || enderecos[0];
+      return callback(null, escolhido ? escolhido.address : null, escolhido ? escolhido.family : null);
+    } catch (e) {
+      return callback(e instanceof Error ? e : new Error(String(e)));
+    }
   };
-  if (data) config.data = data;
-  return axios(config);
+
+  return {
+    http: new http.Agent({ lookup: lookupSeguro, keepAlive: false }),
+    https: new https.Agent({ lookup: lookupSeguro, keepAlive: false }),
+  };
+}
+
+/**
+ * Valida a URL antes de qualquer requisição: resolve o hostname e confirma que
+ * ele aponta apenas para endereços públicos (ORIGINAL + cada redirect).
+ */
+async function request(url, timeout = 7000, method = "GET", data = null) {
+  let alvo = url;
+  for (let passo = 0; passo <= MAX_REDIRECTS; passo++) {
+    const config = {
+      method,
+      url: alvo,
+      timeout,
+      validateStatus: () => true,
+      headers: { "User-Agent": "VulnexusAI-Extreme/5.0", "Accept": "*/*" },
+      maxRedirects: 0, // redirecionamentos tratados manualmente aqui embaixo
+      proxy: false,
+    };
+    if (data) config.data = data;
+
+    // Pre-valida via DNS o hostname do alvo (original e a cada redirect).
+    const u = new URL(alvo);
+    await validarHostPublico(u.hostname);
+
+    // Conecta com agente que revalida a resolução no momento da conexão.
+    const agentes = criarAgenteSeguro();
+    config.httpAgent = agentes.http;
+    config.httpsAgent = agentes.https;
+
+    const resposta = await axios(config);
+
+    // É redirect e queremos segui-lo? Revalidamos o Location antes.
+    if (REDIRECT_STATUS.has(resposta.status) && resposta.headers.location) {
+      let prox;
+      try {
+        prox = new URL(resposta.headers.location, alvo).toString();
+      } catch {
+        throw new SSRFError("Location inválido em redirecionamento");
+      }
+      const proxProtocol = new URL(prox).protocol;
+      if (!["http:", "https:"].includes(proxProtocol)) {
+        throw new SSRFError("Redirecionamento para protocolo não permitido");
+      }
+      // A próxima iteração revalida via DNS o novo hostname.
+      alvo = prox;
+      if (passo === MAX_REDIRECTS) {
+        throw new SSRFError("Número máximo de redirecionamentos excedido");
+      }
+      continue;
+    }
+
+    return resposta;
+  }
+  throw new SSRFError("Redirecionamento em loop ou inválido");
 }
 
 function correlacionar(vulns) {
