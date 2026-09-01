@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Erro de CORS: como resolver no Node.js e Nginx sem usar wildcard (*) | VulnexusAI</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <meta name="description" content="Recebeu o erro 'blocked by CORS policy' no console? Veja como resolver no Express (Node.js), Nginx e Next.js com Vary: Origin e suporte seguro a credenciais.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://vulnexusai.com/blog/erro-cors-como-resolver-nodejs-nginx">
+    <meta property="og:title" content="Erro de CORS no navegador: como resolver no Node.js e Nginx sem usar wildcard (*)">
+    <meta property="og:description" content="Recebeu o erro 'blocked by CORS policy' no console? Veja como resolver no Express (Node.js), Nginx e Next.js com Vary: Origin e suporte seguro a credenciais.">
+    <meta property="og:url" content="https://vulnexusai.com/blog/erro-cors-como-resolver-nodejs-nginx">
+    <meta property="og:type" content="article">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <style>
+        pre { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 16px; overflow-x: auto; color: #e2e8f0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.9rem; line-height: 1.5; }
+        code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+        p code, li code { background: #1e293b; color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-size: 0.875rem; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col justify-between">
+    <nav class="border-b border-gray-800 bg-gray-900/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+            <a href="/" class="flex items-center gap-2 text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
+                VulnexusAI
+            </a>
+            <div class="flex items-center gap-4 text-sm">
+                <a href="/pricing.html" class="text-gray-400 hover:text-white">Preços</a>
+                <a href="/" class="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg font-medium">Verificar API</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto px-4 py-12 flex-grow">
+        <article class="prose prose-invert lg:prose-lg max-w-none">
+            <p class="text-sm font-semibold text-purple-400 uppercase tracking-wider mb-2">VULNEXUSAI · BLOG DE SEGURANÇA</p>
+            <h1 class="text-3xl md:text-5xl font-extrabold text-white tracking-tight mb-4">
+                Erro de CORS no navegador: como resolver no Node.js e Nginx sem usar wildcard (*)
+            </h1>
+            <p class="text-lg text-gray-300 mb-6 leading-relaxed">
+                Recebeu a mensagem "Access to fetch at... has been blocked by CORS policy"? Entenda por que o erro acontece e aprenda a configurar Node.js, Nginx e Next.js com suporte a cookies/sessão sem abrir brechas de segurança nem ter problemas de cache com CDN.
+            </p>
+            <p class="text-sm text-gray-500 border-b border-gray-800 pb-6 mb-8">Publicado em 01 de setembro de 2026 · 6 min de leitura</p>
+
+            <div class="space-y-6 text-gray-300 leading-relaxed">
+                <p>Você faz um deploy, abre o frontend e a aplicação não carrega dados: o console do navegador é inundado com o erro <code>Access to fetch at 'https://api.seusite.com' from origin 'https://seusite.com' has been blocked by CORS policy</code>. Na pressa de destravar o sistema, a reação mais comum é adicionar <code>Access-Control-Allow-Origin: *</code> — o que quebra requisições com cookies/sessão (<code>credentials: 'include'</code>) ou escancara sua API para qualquer site na internet. Resolver CORS de forma definitiva exige entender o que o navegador está pedindo, configurar uma allowlist dinâmica e instruir caches com <code>Vary: Origin</code>.</p>
+
+                <h2 class="text-2xl font-bold text-white mt-10 mb-4">Por que o erro de CORS acontece</h2>
+                <p>O CORS (Cross-Origin Resource Sharing) é uma restrição imposta pelo <strong>navegador</strong>, não pelo servidor. Quando o JavaScript do seu frontend (ex.: <code>https://app.seusite.com</code>) tenta fazer uma requisição para uma API em domínio, subdomínio ou porta diferente (ex.: <code>https://api.seusite.com</code>), o navegador bloqueia a leitura da resposta a menos que a API confirme explicitamente que aquela origem é autorizada.</p>
+                <p>Em requisições que usam métodos como <code>PUT</code>, <code>DELETE</code>, <code>PATCH</code> ou enviam cabeçalhos customizados (como <code>Authorization</code> ou <code>Content-Type: application/json</code>), o navegador envia primeiro uma requisição prévia chamada <strong>preflight (OPTIONS)</strong>. Se o servidor não responder a essa requisição <code>OPTIONS</code> com status <code>204</code>/<code>200</code> e os headers corretos, a requisição principal nem chega a ser enviada.</p>
+
+                <h2 class="text-2xl font-bold text-white mt-10 mb-4">Como resolver no Node.js (Express)</h2>
+                <p>Para suportar autenticação com cookies ou tokens via header sem usar wildcard <code>*</code>, implemente uma allowlist dinâmica e inclua o header <code>Vary: Origin</code> para evitar que CDNs entreguem respostas cacheadas para a origem errada:</p>
+
+                <pre><code class="language-js">const express = require('express');
+const cors = require('cors');
+const app = express();
+
+// Lista explícita de domínios autorizados
+const origensPermitidas = [
+  'https://seusite.com',
+  'https://www.seusite.com',
+  'https://app.seusite.com',
+  'http://localhost:3000' // apenas em desenvolvimento
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Permite requisições sem origin (mobile apps, curl ou tarefas cron)
+    if (!origin || origensPermitidas.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Bloqueado pela política de CORS da VulnexusAI'));
+    }
+  },
+  credentials: true, // Permite envio de cookies e tokens de sessão
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  maxAge: 86400 // Cache do preflight por 24 horas no navegador
+};
+
+// Garante que CDNs criem entradas de cache separadas por origem
+app.use((req, res, next) => {
+  res.header('Vary', 'Origin');
+  next();
+});
+
+app.use(cors(corsOptions));
+// Responde imediatamente a qualquer preflight OPTIONS
+app.options('*', cors(corsOptions));
+</code></pre>
+
+                <h2 class="text-2xl font-bold text-white mt-10 mb-4">Como resolver no Nginx (Reverse Proxy)</h2>
+                <p>No Nginx, o padrão mais limpo e seguro mapeia as origens válidas via <code>map</code> fora do bloco de rotas, devolvendo <code>204</code> no preflight <code>OPTIONS</code> e anexando <code>Vary: Origin</code>:</p>
+
+                <pre><code class="language-nginx"># 1. Allowlist dinâmica fora do bloco server
+map $http_origin $cors_origin {
+    default "";
+    "https://seusite.com" "$http_origin";
+    "https://app.seusite.com" "$http_origin";
+    "http://localhost:3000" "$http_origin";
+}
+
+# 2. Habilita credenciais somente se a origem foi validada na lista
+map $cors_origin $cors_cred {
+    default "";
+    "~^https?://" "true";
+}
+
+server {
+    listen 443 ssl http2;
+    server_name api.seusite.com;
+
+    location / {
+        # Preflight OPTIONS com saída limpa
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' $cors_origin always;
+            add_header 'Access-Control-Allow-Credentials' $cors_cred always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, PATCH, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization, X-Requested-With' always;
+            add_header 'Access-Control-Max-Age' 86400 always;
+            add_header 'Vary' 'Origin' always;
+            add_header 'Content-Type' 'text/plain; charset=utf-8';
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+
+        # Headers nas requisições reais (GET, POST, etc.)
+        add_header 'Access-Control-Allow-Origin' $cors_origin always;
+        add_header 'Access-Control-Allow-Credentials' $cors_cred always;
+        add_header 'Vary' 'Origin' always;
+
+        proxy_pass http://127.0.0.1:4000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+</code></pre>
+
+                <h2 class="text-2xl font-bold text-white mt-10 mb-4">Como resolver no Next.js (App Router Route Handler)</h2>
+                <p>Para rotas de API no Next.js (<code>app/api/[...]/route.ts</code>), use uma função utilitária com lógica condicional de origem similar ao Express:</p>
+
+                <pre><code class="language-ts">import { NextRequest, NextResponse } from 'next/server';
+
+const origensPermitidas = [
+  'https://seusite.com',
+  'https://app.seusite.com',
+  'http://localhost:3000',
+];
+
+function getCorsHeaders(request: NextRequest) {
+  const origin = request.headers.get('origin') ?? '';
+  const isPermitida = origensPermitidas.includes(origin);
+
+  const headers = new Headers();
+  if (isPermitida) {
+    headers.set('Access-Control-Allow-Origin', origin);
+    headers.set('Access-Control-Allow-Credentials', 'true');
+  }
+  // Fundamental para evitar respostas erradas cacheadas em edge/CDN
+  headers.set('Vary', 'Origin');
+  headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  headers.set('Access-Control-Max-Age', '86400');
+
+  return headers;
+}
+
+// Resposta para preflight OPTIONS
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: getCorsHeaders(request),
+  });
+}
+
+// Handler GET / POST de exemplo
+export async function GET(request: NextRequest) {
+  const headers = getCorsHeaders(request);
+  return NextResponse.json({ status: 'ok', data: 'Dados protegidos' }, { headers });
+}
+</code></pre>
+
+                <h2 class="text-2xl font-bold text-white mt-10 mb-4">Erros comuns que quebram a produção</h2>
+                <ul class="list-disc pl-6 space-y-2">
+                    <li><strong>Esquecer o cabeçalho <code>Vary: Origin</code>:</strong> Quando você reflete a origem dinamicamente a partir de uma allowlist, CDNs e proxies intermediários (Cloudflare, Varnish, Fastly) podem armazenar em cache a resposta gerada para o <code>site-a.com</code> e servi-la para o <code>site-b.com</code>. O navegador no <code>site-b.com</code> verá a origem trocada e bloqueará a requisição. O <code>Vary: Origin</code> obriga a CDN a criar chaves de cache isoladas por origem.</li>
+                    <li><strong>Usar <code>*</code> junto com <code>credentials: 'true'</code>:</strong> A especificação W3C proíbe essa combinação. Se o backend responder <code>Access-Control-Allow-Origin: *</code> para uma chamada com cookies/sessão, o navegador rejeitará a resposta no lado do cliente.</li>
+                    <li><strong>Refletir cegamente qualquer <code>Origin</code>:</strong> Fazer <code>res.setHeader('Access-Control-Allow-Origin', req.headers.origin)</code> sem validar em uma lista autorizada permite que qualquer site malicioso faça requisições autenticadas contra a sua API.</li>
+                    <li><strong>Esquecer de responder ao método OPTIONS:</strong> Se o servidor retornar <code>404</code>, <code>401</code> ou <code>500</code> para a requisição de preflight, o navegador aborta e nunca envia a requisição principal.</li>
+                    <li><strong>Duplicação de cabeçalhos (Backend + Nginx):</strong> Se o Express e o Nginx adicionarem o header ao mesmo tempo, o navegador receberá valores duplicados (ex.: <code>https://seusite.com, https://seusite.com</code>) e abortará o carregamento por erro de parsing.</li>
+                </ul>
+
+                <h2 class="text-2xl font-bold text-white mt-10 mb-4">Como verificar</h2>
+                <p>O scanner da <strong>VulnexusAI</strong> executa testes automatizados simulando requisições cross-origin com origens arbitrárias para verificar se a sua API reflete origens perigosas ou combina credenciais com wildcard. Teste seu endpoint e veja o diagnóstico completo em segundos.</p>
+            </div>
+
+            <div class="mt-12 p-8 rounded-2xl bg-gradient-to-r from-purple-900/50 to-pink-900/30 border border-purple-800 text-center">
+                <h3 class="text-2xl font-bold text-white mb-2">Sua API está protegida contra falhas de CORS e cabeçalhos inseguros?</h3>
+                <p class="text-gray-300 mb-6 max-w-xl mx-auto">Rode um scan gratuito de vulnerabilidades na VulnexusAI e receba um relatório completo com dicas práticas de correção.</p>
+                <a href="/" class="inline-block bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold px-8 py-3 rounded-xl transition shadow-lg shadow-purple-500/25">
+                    Escanear meu site gratuitamente →
+                </a>
+            </div>
+        </article>
+    </main>
+
+    <footer class="border-t border-gray-800 py-8 text-center text-xs text-gray-500">
+        <div class="max-w-4xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p>© 2026 VulnexusAI. Todos os direitos reservados.</p>
+            <div class="flex gap-6">
+                <a href="/privacy.html" class="hover:text-gray-400">Privacidade</a>
+                <a href="/terms.html" class="hover:text-gray-400">Termos</a>
+                <a href="/cookies.html" class="hover:text-gray-400">Cookies</a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

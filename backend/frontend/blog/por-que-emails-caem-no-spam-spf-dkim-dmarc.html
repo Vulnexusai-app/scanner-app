@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Por que seus emails caem no SPAM (e como configurar SPF, DKIM e DMARC) | VulnexusAI</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <meta name="description" content="Emails transacionais caindo no lixo eletrônico? Aprenda a configurar SPF, DKIM e DMARC no DNS do domínio e atenda às exigências anti-spam de Gmail e Yahoo.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://vulnexusai.com/blog/por-que-emails-caem-no-spam-spf-dkim-dmarc">
+    <meta property="og:title" content="Por que seus emails caem no SPAM (e como configurar SPF, DKIM e DMARC)">
+    <meta property="og:description" content="Emails transacionais caindo no lixo eletrônico? Aprenda a configurar SPF, DKIM e DMARC no DNS do domínio e atenda às exigências anti-spam de Gmail e Yahoo.">
+    <meta property="og:url" content="https://vulnexusai.com/blog/por-que-emails-caem-no-spam-spf-dkim-dmarc">
+    <meta property="og:type" content="article">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <style>
+        pre { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 16px; overflow-x: auto; color: #e2e8f0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.9rem; line-height: 1.5; }
+        code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+        p code, li code { background: #1e293b; color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-size: 0.875rem; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col justify-between">
+    <nav class="border-b border-gray-800 bg-gray-900/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+            <a href="/" class="flex items-center gap-2 text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
+                VulnexusAI
+            </a>
+            <div class="flex items-center gap-4 text-sm">
+                <a href="/pricing.html" class="text-gray-400 hover:text-white">Preços</a>
+                <a href="/" class="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg font-medium">Verificar API</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto px-4 py-12 flex-grow">
+        <article class="prose prose-invert lg:prose-lg max-w-none">
+            <p class="text-sm font-semibold text-purple-400 uppercase tracking-wider mb-2">VULNEXUSAI · BLOG DE SEGURANÇA</p>
+            <h1 class="text-3xl md:text-5xl font-extrabold text-white tracking-tight mb-4">
+                Por que seus emails caem no SPAM (e como configurar SPF, DKIM e DMARC)
+            </h1>
+            <p class="text-lg text-gray-300 mb-6 leading-relaxed">
+                Emails de cadastro, recuperação de senha e notificações não chegam na caixa de entrada? Entenda como autenticar seu domínio com SPF, DKIM e DMARC no DNS para evitar bloqueios automáticos no Gmail, Outlook e Yahoo.
+            </p>
+            <p class="text-sm text-gray-500 border-b border-gray-800 pb-6 mb-8">Publicado em 01 de setembro de 2026 · 7 min de leitura</p>
+
+            <div class="space-y-6 text-gray-300 leading-relaxed">
+                <p>Seus usuários reclamam que nunca receberam o código de recuperação de senha ou a confirmação de compra? O motivo quase nunca é o conteúdo do email: desde as atualizações rigorosas de segurança do Google e Yahoo, servidores de email <strong>rejeitam ou jogam no SPAM</strong> qualquer mensagem enviada por domínios que não tenham SPF, DKIM e DMARC configurados corretamente no DNS. Sem esses três registros, qualquer provedor considera o seu sistema como um potencial remetente de phishing.</p>
+
+                <h2 class="text-2xl font-bold text-white mt-10 mb-4">A tríade de autenticação de email: o que cada um faz</h2>
+                <ul class="list-disc pl-6 space-y-2">
+                    <li><strong>SPF (Sender Policy Framework):</strong> Uma lista pública no seu DNS dizendo: <em>"Estes são os IPs e servidores autorizados a enviar mensagens pelo meu domínio"</em>.</li>
+                    <li><strong>DKIM (DomainKeys Identified Mail):</strong> Uma assinatura criptográfica anexada ao cabeçalho de cada email enviado. O destinatário usa a chave pública no seu DNS para comprovar que a mensagem não foi forjada ou alterada no caminho.</li>
+                    <li><strong>DMARC (Domain-based Message Authentication):</strong> A regra que orienta provedores (Gmail, Microsoft, Apple) sobre o que fazer caso o SPF ou o DKIM falhem (ignorar, colocar no SPAM ou rejeitar totalmente), além de gerar relatórios diários de tentativas de falsificação.</li>
+                </ul>
+
+                <h2 class="text-2xl font-bold text-white mt-10 mb-4">Como configurar no DNS passo a passo</h2>
+
+                <h3 class="text-xl font-semibold text-purple-300 mt-6 mb-2">1. Configurando o registro SPF (TXT)</h3>
+                <p>Adicione um registro do tipo <code>TXT</code> na raiz do seu domínio (<code>@</code> ou <code>seudominio.com</code>). Exemplo para quem envia via Google Workspace e serviços de API como Resend ou SendGrid:</p>
+
+                <pre><code class="language-dns">Tipo: TXT
+Nome / Host: @ (ou seudominio.com)
+Valor: v=spf1 include:_spf.google.com include:resend.com ~all
+</code></pre>
+                <p><strong>Atenção:</strong> O sufixo <code>~all</code> (SoftFail) orienta o provedor a aceitar com cautela envios não listados, enquanto <code>-all</code> (HardFail) instrui a recusa imediata.</p>
+
+                <h3 class="text-xl font-semibold text-purple-300 mt-6 mb-2">2. Configurando o registro DKIM (TXT ou CNAME)</h3>
+                <p>O DKIM depende do seu provedor de email (Amazon SES, Postmark, Resend, SendGrid, Mailgun). Ele fornecerá um <strong>seletor</strong> e um registro CNAME ou TXT com a chave pública.</p>
+                <p>Exemplo de configuração com chave TXT:</p>
+
+                <pre><code class="language-dns">Tipo: TXT
+Nome / Host: s1._domainkey.seudominio.com
+Valor: v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC3Q...
+</code></pre>
+
+                <h3 class="text-xl font-semibold text-purple-300 mt-6 mb-2">3. Configurando a política DMARC (TXT)</h3>
+                <p>Crie um registro <code>TXT</code> no subdomínio <code>_dmarc.seudominio.com</code>. Para começar sem riscos de bloquear envios legítimos, inicie no modo de monitoramento (<code>p=none</code>):</p>
+
+                <pre><code class="language-dns">Tipo: TXT
+Nome / Host: _dmarc
+Valor: v=DMARC1; p=none; rua=mailto:dmarc-reports@seudominio.com; pct=100; sp=none
+</code></pre>
+                <p>Depois de 2 a 4 semanas monitorando os relatórios de entrega, evolua a política para quarentena (<code>p=quarantine</code>) ou rejeição total de mensagens fraudulentas (<code>p=reject</code>):</p>
+
+                <pre><code class="language-dns">Valor: v=DMARC1; p=reject; rua=mailto:dmarc-reports@seudominio.com; adkim=s; aspf=s
+</code></pre>
+
+                <h2 class="text-2xl font-bold text-white mt-10 mb-4">Erros comuns que quebram a produção</h2>
+                <ul class="list-disc pl-6 space-y-2">
+                    <li><strong>Ter mais de um registro SPF no mesmo domínio:</strong> É uma violação direta da RFC. Se você criar <code>v=spf1 include:sendgrid.net ~all</code> e outra linha <code>v=spf1 include:_spf.google.com ~all</code>, o SPF é <strong>invalidado por completo</strong> e todos os emails falham na verificação. Consolide todos os <code>include:</code> em um único registro TXT.</li>
+                    <li><strong>Ultrapassar o limite de 10 DNS Lookups no SPF:</strong> A especificação do SPF permite no máximo 10 consultas DNS aninhadas. Usar múltiplos includes grandes pode estourar o limite silenciosamente (erro <em>PermError</em>).</li>
+                    <li><strong>Ativar DMARC com <code>p=reject</code> de primeira:</strong> Se você esquecer de cadastrar algum serviço de automação ou CRM (ex.: HubSpot, ActiveCampaign), todos os emails dessa ferramenta serão deletados antes de chegar ao destinatário.</li>
+                    <li><strong>Ignorar subdomínios de envio:</strong> Se você envia mensagens usando <code>contato@notificacoes.seudominio.com</code>, o subdomínio <code>notificacoes</code> precisa ter seus próprios registros SPF/DKIM ou o DMARC do domínio pai configurado com <code>sp=quarantine/reject</code>.</li>
+                </ul>
+
+                <h2 class="text-2xl font-bold text-white mt-10 mb-4">Como verificar</h2>
+                <p>O verificador de segurança da <strong>VulnexusAI</strong> analisa instantaneamente se o seu domínio possui registros SPF válidos, seletores DKIM ativos e políticas DMARC compatíveis com as exigências dos principais provedores. Faça uma checagem gratuita e garanta 100% de entregabilidade.</p>
+            </div>
+
+            <div class="mt-12 p-8 rounded-2xl bg-gradient-to-r from-purple-900/50 to-pink-900/30 border border-purple-800 text-center">
+                <h3 class="text-2xl font-bold text-white mb-2">Seus registros de DNS de email estão corretos?</h3>
+                <p class="text-gray-300 mb-6 max-w-xl mx-auto">Rode uma checagem gratuita na VulnexusAI e receba o score de segurança do seu domínio com status de SPF, DKIM e DMARC.</p>
+                <a href="/" class="inline-block bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold px-8 py-3 rounded-xl transition shadow-lg shadow-purple-500/25">
+                    Verificar meu domínio gratuitamente →
+                </a>
+            </div>
+        </article>
+    </main>
+
+    <footer class="border-t border-gray-800 py-8 text-center text-xs text-gray-500">
+        <div class="max-w-4xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p>© 2026 VulnexusAI. Todos os direitos reservados.</p>
+            <div class="flex gap-6">
+                <a href="/privacy.html" class="hover:text-gray-400">Privacidade</a>
+                <a href="/terms.html" class="hover:text-gray-400">Termos</a>
+                <a href="/cookies.html" class="hover:text-gray-400">Cookies</a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

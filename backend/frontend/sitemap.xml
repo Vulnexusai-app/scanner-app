@@ -5,4 +5,6 @@
   <url><loc>https://vulnexusai.com/terms.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
   <url><loc>https://vulnexusai.com/privacy.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
   <url><loc>https://vulnexusai.com/cookies.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://vulnexusai.com/blog/erro-cors-como-resolver-nodejs-nginx</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://vulnexusai.com/blog/por-que-emails-caem-no-spam-spf-dkim-dmarc</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
 </urlset>
