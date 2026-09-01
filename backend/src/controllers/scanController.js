@@ -3,6 +3,7 @@ const { analisarComIA } = require("../../scans/analyzers/aiAnalyzer");
 const db = require("../services/dbService");
 const config = require("../config");
 const { log } = require("../utils/logger");
+const { SSRFError } = require("../utils/ssrf");
 
 const { LIMITES } = config;
 
@@ -72,6 +73,11 @@ async function startScan(req, res) {
     return res.json(resultado);
   } catch (erro) {
     const email = req.user?.email || req.usuario?.email || "unknown";
+    // SSRFError é erro de validação de entrada (URL), não falha do servidor.
+    if (erro instanceof SSRFError) {
+      log("warn", "scan_ssrf_bloqueado", email, erro.message);
+      return res.status(400).json({ erro: erro.message });
+    }
     log("error", "scan_falhou", email, erro.message);
     return res.status(500).json({ erro: erro.message });
   }
