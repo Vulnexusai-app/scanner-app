@@ -62,22 +62,9 @@ Acesse a dashboard moderna com interface futurista e efeitos de Glassmorphism.
 
 ## 🧪 Como rodar localmente
 
-> ⚠️ **Nota:** este repo é legado — rodar o scanner aqui localmente não é mais suportado.
-> A configuração abaixo é apenas referência (as chaves variáveis estão documentadas em
-> [`backend/.env.example`](backend/.env.example)).
-
-```bash
-git clone https://github.com/Vulnexusai-app/scanner-app.git
-cd scanner-app
-npm install
-cd backend
-npm install
-npm run dev
-```
-
-O app espera um `.env` em `backend/` com as chaves de Supabase, IA, Stripe e Resend
-(variáveis e placeholders em [`backend/.env.example`](backend/.env.example)). O schema
-SQL completo do Supabase está em `backend/database/migrations/`.
+> ⚠️ **Este repositório está arquivado e não roda mais em produção.** A instalação
+> e execução local deixaram de ser suportadas e as instruções de setup foram
+> removidas. Consulte o produto ativo em **https://vulnexusai.com/** (Next.js 16).
 
 ---
 
