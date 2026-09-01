@@ -8,10 +8,11 @@ const supabase = require("./services/supabase");
 
 // Sentry - opcional
 let Sentry;
+let sentryAtivo = false;
 try {
   Sentry = require("@sentry/node");
   const { nodeProfilingIntegration } = require("@sentry/profiling-node");
-  
+
   if (process.env.SENTRY_DSN) {
     Sentry.init({
       dsn: process.env.SENTRY_DSN,
@@ -20,6 +21,9 @@ try {
       environment: process.env.ENVIRONMENT || "production"
     });
     log("info", "Sentry inicializado");
+    // Mantém o error handler no final do app (após as rotas), mas registra
+    // somente se o Sentry foi carregado e inicializado com sucesso.
+    sentryAtivo = true;
   }
 } catch (err) {
   log("warn", "Sentry não disponível", err.message);
@@ -137,8 +141,10 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Sentry Error Handler
-Sentry.setupExpressErrorHandler(app);
+// Sentry Error Handler (registrado após as rotas; só se Sentry ativo)
+if (sentryAtivo) {
+  Sentry.setupExpressErrorHandler(app);
+}
 
 // SPA Fallback
 app.get("*", (req, res, next) => {
